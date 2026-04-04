@@ -70,8 +70,8 @@ service cloud.firestore {
     // ===============================================================
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isOwner(userId) && hasRequiredFields(['uid', 'displayName', 'email', 'createdAt']) && isValidUser(request.resource.data) && uidUnchanged();
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified();
+      allow create: if isOwner(userId) && hasRequiredFields(['uid', 'displayName', 'email', 'createdAt']) && isValidUser(request.resource.data) && uidUnchanged() && !('reputation' in request.resource.data) && !('verified' in request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified() && (!('reputation' in request.resource.data) || request.resource.data.reputation == resource.data.reputation) && (!('verified' in request.resource.data) || request.resource.data.verified == resource.data.verified);
     }
 
     match /items/{itemId} {
