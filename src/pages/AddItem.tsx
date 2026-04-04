@@ -33,7 +33,7 @@ export default function AddItem() {
     setLoading(true);
     try {
       const itemRef = doc(collection(db, 'items'));
-      await setDoc(itemRef, {
+      const itemData: any = {
         id: itemRef.id,
         ownerId: user.uid,
         title: formData.title,
@@ -46,7 +46,15 @@ export default function AddItem() {
         status: 'available',
         isAuction: formData.isAuction,
         createdAt: new Date().toISOString(),
-      });
+      };
+
+      if (formData.isAuction) {
+        const endsAt = new Date();
+        endsAt.setHours(endsAt.getHours() + 24);
+        itemData.auctionEndsAt = endsAt.toISOString();
+      }
+
+      await setDoc(itemRef, itemData);
       
       toast.success('¡Artículo publicado con éxito!');
       navigate('/');

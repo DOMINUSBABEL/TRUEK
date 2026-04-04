@@ -55,6 +55,7 @@ service cloud.firestore {
              (!('location' in data) || (data.location is string && data.location.size() <= 100)) &&
              data.status in ['available', 'trading', 'traded'] &&
              (!('isAuction' in data) || data.isAuction is bool) &&
+             (!('auctionEndsAt' in data) || data.auctionEndsAt is string) &&
              data.createdAt is string;
     }
 
@@ -65,6 +66,14 @@ service cloud.firestore {
              data.offererId is string && data.offererId.size() > 0 &&
              data.offeredItemId is string && data.offeredItemId.size() > 0 &&
              data.status in ['pending', 'accepted', 'rejected', 'completed'] &&
+             data.createdAt is string;
+    }
+
+    function isValidChallenge(data) {
+      return data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.history is list && data.history.size() > 0 &&
+             data.status in ['active', 'completed'] &&
              data.createdAt is string;
     }
 
@@ -109,6 +118,12 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (request.auth.uid == resource.data.offererId || request.auth.uid == resource.data.targetOwnerId);
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.offererId && hasRequiredFields(['id', 'targetItemId', 'targetOwnerId', 'offererId', 'offeredItemId', 'status', 'createdAt']) && isValidTrade(request.resource.data);
       allow update: if isAuthenticated() && (request.auth.uid == resource.data.offererId || request.auth.uid == resource.data.targetOwnerId) && isValidTrade(request.resource.data) && request.resource.data.offererId == resource.data.offererId && request.resource.data.targetOwnerId == resource.data.targetOwnerId;
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && hasRequiredFields(['id', 'userId', 'history', 'status', 'createdAt']) && isValidChallenge(request.resource.data);
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && isValidChallenge(request.resource.data) && request.resource.data.userId == resource.data.userId;
     }
 
     match /chats/{chatId} {

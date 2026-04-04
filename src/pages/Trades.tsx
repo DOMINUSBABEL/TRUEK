@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArrowRightLeft, MessageCircle } from 'lucide-react';
+import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export default function Trades() {
   const { user } = useAuth();
@@ -11,33 +12,45 @@ export default function Trades() {
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTrades = async () => {
-      if (!user) return;
-      try {
-        const q = query(
-          collection(db, 'trades'),
-          or(
-            where('offererId', '==', user.uid),
-            where('targetOwnerId', '==', user.uid)
-          )
-        );
-        const snapshot = await getDocs(q);
-        setTrades(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      } catch (error) {
-        console.error("Error fetching trades:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchTrades = async () => {
+    if (!user) return;
+    try {
+      const q = query(
+        collection(db, 'trades'),
+        or(
+          where('offererId', '==', user.uid),
+          where('targetOwnerId', '==', user.uid)
+        )
+      );
+      const snapshot = await getDocs(q);
+      
+      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+        const data = tradeDoc.data();
+        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
+        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
+        return {
+          id: tradeDoc.id,
+          ...data,
+          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
+          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
+        };
+      }));
+      
+      setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    } catch (error) {
+      console.error("Error fetching trades:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchTrades();
   }, [user]);
 
   const startChat = async (otherUserId: string) => {
     if (!user) return;
     
-    // Check if chat already exists
     const chatsRef = collection(db, 'chats');
     const q = query(chatsRef, where('participants', 'array-contains', user.uid));
     const snapshot = await getDocs(q);
@@ -53,7 +66,6 @@ export default function Trades() {
     if (existingChatId) {
       navigate(`/chat/${existingChatId}`);
     } else {
-      // Create new chat
       const newChatRef = doc(collection(db, 'chats'));
       await setDoc(newChatRef, {
         id: newChatRef.id,
@@ -64,10 +76,76 @@ export default function Trades() {
     }
   };
 
+  const updateChallengeIfActive = async (userId: string, oldItemId: string, newItemId: string) => {
+    const q = query(collection(db, 'challenges'), where('userId', '==', userId), where('status', '==', 'active'), limit(1));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const challengeDoc = snap.docs[0];
+      const challengeData = challengeDoc.data();
+      const history = challengeData.history || [];
+      // If the old item is the last one in the history, append the new item
+      if (history.length > 0 && history[history.length - 1] === oldItemId) {
+        await updateDoc(doc(db, 'challenges', challengeDoc.id), {
+          history: [...history, newItemId]
+        });
+        
+        // Update user's tradeScore
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const currentScore = userSnap.data().tradeScore || 0;
+          await updateDoc(userRef, { tradeScore: currentScore + 10 });
+        }
+      }
+    }
+  };
+
+  const handleAccept = async (trade: any) => {
+    try {
+      // Update trade status
+      await updateDoc(doc(db, 'trades', trade.id), { status: 'accepted' });
+      
+      // Update items status
+      await updateDoc(doc(db, 'items', trade.targetItemId), { status: 'traded' });
+      await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
+
+      // Reject other pending trades for these items
+      const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
+      const snapshot = await getDocs(q);
+      for (const tDoc of snapshot.docs) {
+        const tData = tDoc.data();
+        if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
+          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
+        }
+      }
+
+      // Update challenges
+      await updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId);
+      await updateChallengeIfActive(trade.offererId, trade.offeredItemId, trade.targetItemId);
+
+      toast.success('¡Trueque aceptado!');
+      fetchTrades();
+    } catch (error) {
+      console.error("Error accepting trade:", error);
+      toast.error('Error al aceptar el trueque');
+    }
+  };
+
+  const handleReject = async (tradeId: string) => {
+    try {
+      await updateDoc(doc(db, 'trades', tradeId), { status: 'rejected' });
+      toast.success('Trueque rechazado');
+      fetchTrades();
+    } catch (error) {
+      console.error("Error rejecting trade:", error);
+      toast.error('Error al rechazar el trueque');
+    }
+  };
+
   if (!user) return null;
 
   return (
-    <div className="p-4">
+    <div className="p-4 pb-24">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Mis Trueques</h2>
       
       {loading ? (
@@ -108,15 +186,38 @@ export default function Trades() {
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium text-gray-900 truncate flex-1">
-                    {isMyOffer ? 'Tu artículo' : 'Su artículo'}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex-1 flex flex-col items-center text-center">
+                    <img src={isMyOffer ? trade.offeredItem?.imageUrl : trade.targetItem?.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover mb-2 border border-gray-200" />
+                    <span className="text-sm font-medium text-gray-900 line-clamp-1">{isMyOffer ? trade.offeredItem?.title : trade.targetItem?.title}</span>
+                    <span className="text-xs text-gray-500">Tu artículo</span>
                   </div>
-                  <ArrowRightLeft className="w-4 h-4 text-gray-400 mx-2 flex-shrink-0" />
-                  <div className="text-sm font-medium text-gray-900 truncate flex-1 text-right">
-                    {isMyOffer ? 'Su artículo' : 'Tu artículo'}
+                  <ArrowRightLeft className="w-5 h-5 text-gray-400 mx-4 flex-shrink-0" />
+                  <div className="flex-1 flex flex-col items-center text-center">
+                    <img src={isMyOffer ? trade.targetItem?.imageUrl : trade.offeredItem?.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover mb-2 border border-gray-200" />
+                    <span className="text-sm font-medium text-gray-900 line-clamp-1">{isMyOffer ? trade.targetItem?.title : trade.offeredItem?.title}</span>
+                    <span className="text-xs text-gray-500">Su artículo</span>
                   </div>
                 </div>
+
+                {!isMyOffer && trade.status === 'pending' && (
+                  <div className="flex space-x-2 mt-4 pt-4 border-t border-gray-100">
+                    <button 
+                      onClick={() => handleReject(trade.id)}
+                      className="flex-1 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center"
+                    >
+                      <XCircle className="w-4 h-4 mr-1.5" />
+                      Rechazar
+                    </button>
+                    <button 
+                      onClick={() => handleAccept(trade)}
+                      className="flex-1 py-2 bg-green-50 text-green-700 font-medium rounded-lg hover:bg-green-100 transition-colors flex items-center justify-center"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1.5" />
+                      Aceptar
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

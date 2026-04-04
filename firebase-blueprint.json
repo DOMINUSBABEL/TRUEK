@@ -35,6 +35,7 @@
         "location": { "type": "string" },
         "status": { "type": "string", "enum": ["available", "trading", "traded"] },
         "isAuction": { "type": "boolean" },
+        "auctionEndsAt": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "ownerId", "title", "description", "imageUrl", "condition", "category", "status", "createdAt"]
@@ -53,6 +54,19 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "targetItemId", "targetOwnerId", "offererId", "offeredItemId", "status", "createdAt"]
+    },
+    "Challenge": {
+      "title": "Challenge",
+      "description": "A user's trade evolution challenge",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "history": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["active", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "history", "status", "createdAt"]
     },
     "Chat": {
       "title": "Chat",
@@ -104,6 +118,10 @@
     "/trades/{tradeId}": {
       "schema": { "$ref": "#/entities/Trade" },
       "description": "Trade offers between users"
+    },
+    "/challenges/{challengeId}": {
+      "schema": { "$ref": "#/entities/Challenge" },
+      "description": "User trade challenges"
     },
     "/chats/{chatId}": {
       "schema": { "$ref": "#/entities/Chat" },

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, setDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle } from 'lucide-react';
+import { formatDistanceToNow, differenceInHours, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,8 @@ export default function ItemDetail() {
   const [myItems, setMyItems] = useState<any[]>([]);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [selectedMyItem, setSelectedMyItem] = useState<string>('');
+  const [auctionOffers, setAuctionOffers] = useState<any[]>([]);
+  const [timeLeft, setTimeLeft] = useState<string>('');
 
   useEffect(() => {
     const fetchItemAndOwner = async () => {
@@ -32,6 +34,24 @@ export default function ItemDetail() {
           if (ownerDoc.exists()) {
             setOwner(ownerDoc.data());
           }
+
+          if (itemData.isAuction && user?.uid === itemData.ownerId) {
+            const q = query(collection(db, 'trades'), where('targetItemId', '==', id), where('status', '==', 'pending'));
+            const snapshot = await getDocs(q);
+            
+            const offers = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+              const tradeData = tradeDoc.data();
+              const offeredItemDoc = await getDoc(doc(db, 'items', tradeData.offeredItemId));
+              const offererDoc = await getDoc(doc(db, 'users', tradeData.offererId));
+              return {
+                id: tradeDoc.id,
+                ...tradeData,
+                offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null,
+                offerer: offererDoc.exists() ? offererDoc.data() : null
+              };
+            }));
+            setAuctionOffers(offers);
+          }
         }
       } catch (error) {
         console.error("Error fetching item:", error);
@@ -41,7 +61,37 @@ export default function ItemDetail() {
     };
 
     fetchItemAndOwner();
-  }, [id]);
+  }, [id, user]);
+
+  useEffect(() => {
+    if (item?.isAuction && item?.auctionEndsAt) {
+      const interval = setInterval(() => {
+        const end = new Date(item.auctionEndsAt);
+        const now = new Date();
+        if (now > end) {
+          setTimeLeft('Subasta finalizada');
+          clearInterval(interval);
+        } else {
+          const hours = differenceInHours(end, now);
+          const minutes = differenceInMinutes(end, now) % 60;
+          setTimeLeft(`${hours}h ${minutes}m restantes`);
+        }
+      }, 60000);
+      
+      // Initial calculation
+      const end = new Date(item.auctionEndsAt);
+      const now = new Date();
+      if (now > end) {
+        setTimeLeft('Subasta finalizada');
+      } else {
+        const hours = differenceInHours(end, now);
+        const minutes = differenceInMinutes(end, now) % 60;
+        setTimeLeft(`${hours}h ${minutes}m restantes`);
+      }
+
+      return () => clearInterval(interval);
+    }
+  }, [item]);
 
   const fetchMyItems = async () => {
     if (!user) return;
@@ -81,6 +131,55 @@ export default function ItemDetail() {
     }
   };
 
+  const updateChallengeIfActive = async (userId: string, oldItemId: string, newItemId: string) => {
+    const q = query(collection(db, 'challenges'), where('userId', '==', userId), where('status', '==', 'active'));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const challengeDoc = snap.docs[0];
+      const challengeData = challengeDoc.data();
+      const history = challengeData.history || [];
+      if (history.length > 0 && history[history.length - 1] === oldItemId) {
+        await updateDoc(doc(db, 'challenges', challengeDoc.id), {
+          history: [...history, newItemId]
+        });
+        
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const currentScore = userSnap.data().tradeScore || 0;
+          await updateDoc(userRef, { tradeScore: currentScore + 10 });
+        }
+      }
+    }
+  };
+
+  const acceptOffer = async (tradeId: string, offererId: string, offeredItemId: string) => {
+    try {
+      // Update accepted trade
+      await updateDoc(doc(db, 'trades', tradeId), { status: 'accepted' });
+      
+      // Reject other trades
+      const otherOffers = auctionOffers.filter(o => o.id !== tradeId);
+      for (const offer of otherOffers) {
+        await updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' });
+      }
+
+      // Update items status
+      await updateDoc(doc(db, 'items', item.id), { status: 'traded' });
+      await updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' });
+
+      // Update challenges
+      await updateChallengeIfActive(item.ownerId, item.id, offeredItemId);
+      await updateChallengeIfActive(offererId, offeredItemId, item.id);
+
+      toast.success('¡Oferta aceptada! Revisa tus mensajes para coordinar.');
+      navigate('/trades');
+    } catch (error) {
+      console.error("Error accepting offer:", error);
+      toast.error('Hubo un error al aceptar la oferta');
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-center text-gray-500">Cargando...</div>;
   }
@@ -102,8 +201,9 @@ export default function ItemDetail() {
         </button>
         <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
         {item.isAuction && (
-          <div className="absolute bottom-4 left-4 bg-amber-500 text-white font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
-            Subasta Activa
+          <div className="absolute bottom-4 left-4 bg-amber-500 text-white font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg flex items-center">
+            <Clock className="w-4 h-4 mr-1.5" />
+            {timeLeft || 'Subasta Activa'}
           </div>
         )}
       </div>
@@ -142,7 +242,40 @@ export default function ItemDetail() {
           </div>
         )}
 
-        {owner && (
+        {isMyItem && item.isAuction && auctionOffers.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Ofertas de la Subasta</h3>
+            <div className="space-y-4">
+              {auctionOffers.map(offer => (
+                <div key={offer.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <img src={offer.offerer?.photoURL || `https://ui-avatars.com/api/?name=${offer.offerer?.displayName}`} alt="" className="w-8 h-8 rounded-full" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{offer.offerer?.displayName}</p>
+                      <p className="text-xs text-gray-500">⭐ {offer.offerer?.reputation || 5.0}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 mb-4 bg-gray-50 p-2 rounded-lg">
+                    <img src={offer.offeredItem?.imageUrl} alt="" className="w-12 h-12 rounded-md object-cover" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{offer.offeredItem?.title}</p>
+                      <p className="text-xs text-gray-500 line-clamp-1">{offer.offeredItem?.description}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => acceptOffer(offer.id, offer.offererId, offer.offeredItemId)}
+                    className="w-full bg-indigo-600 text-white font-medium py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Aceptar esta oferta
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {owner && !isMyItem && (
           <div className="border-t border-gray-100 pt-6 mt-6">
             <h3 className="text-sm font-semibold text-gray-900 mb-4">Ofrecido por</h3>
             <div className="flex items-center justify-between">
