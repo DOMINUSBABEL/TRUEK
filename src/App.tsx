@@ -13,6 +13,8 @@ import ItemDetail from './pages/ItemDetail';
 import Profile from './pages/Profile';
 import Trades from './pages/Trades';
 import Messages from './pages/Messages';
+import Challenge from './pages/Challenge';
+import ChatRoom from './pages/ChatRoom';
 
 export default function App() {
   return (
@@ -26,7 +28,9 @@ export default function App() {
             <Route path="profile" element={<Profile />} />
             <Route path="trades" element={<Trades />} />
             <Route path="messages" element={<Messages />} />
+            <Route path="challenge" element={<Challenge />} />
           </Route>
+          <Route path="/chat/:id" element={<ChatRoom />} />
         </Routes>
         <Toaster position="top-center" />
       </BrowserRouter>

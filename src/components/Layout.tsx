@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, PlusSquare, MessageCircle, User, ArrowLeftRight } from 'lucide-react';
+import { Home, PlusSquare, MessageCircle, User, ArrowLeftRight, Trophy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
 
@@ -10,7 +10,7 @@ export default function Layout() {
 
   const navItems = [
     { path: '/', icon: Home, label: 'Explorar' },
-    { path: '/trades', icon: ArrowLeftRight, label: 'Mis Trueques' },
+    { path: '/challenge', icon: Trophy, label: 'Reto' },
     { path: '/add', icon: PlusSquare, label: 'Publicar' },
     { path: '/messages', icon: MessageCircle, label: 'Mensajes' },
     { path: '/profile', icon: User, label: 'Perfil' },
@@ -44,7 +44,7 @@ export default function Layout() {
       </main>
 
       {user && (
-        <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe">
+        <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe z-50">
           <div className="max-w-md mx-auto flex justify-around items-center h-16">
             {navItems.map((item) => {
               const Icon = item.icon;

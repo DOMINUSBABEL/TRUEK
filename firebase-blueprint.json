@@ -13,6 +13,8 @@
         "location": { "type": "string" },
         "reputation": { "type": "number" },
         "verified": { "type": "boolean" },
+        "tradeScore": { "type": "number" },
+        "fcmToken": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "displayName", "email", "createdAt"]
@@ -28,13 +30,14 @@
         "description": { "type": "string" },
         "imageUrl": { "type": "string" },
         "condition": { "type": "string", "enum": ["new", "like-new", "good", "fair"] },
+        "category": { "type": "string" },
         "lookingFor": { "type": "string" },
         "location": { "type": "string" },
         "status": { "type": "string", "enum": ["available", "trading", "traded"] },
         "isAuction": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "ownerId", "title", "description", "imageUrl", "condition", "status", "createdAt"]
+      "required": ["id", "ownerId", "title", "description", "imageUrl", "condition", "category", "status", "createdAt"]
     },
     "Trade": {
       "title": "Trade",
@@ -50,6 +53,43 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "targetItemId", "targetOwnerId", "offererId", "offeredItemId", "status", "createdAt"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "A chat room between two users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessage": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "participants", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A message in a chat",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "chatId", "senderId", "text", "createdAt"]
+    },
+    "CallSignal": {
+      "title": "CallSignal",
+      "description": "WebRTC signaling data",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "senderId": { "type": "string" },
+        "data": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "senderId", "data", "createdAt"]
     }
   },
   "firestore": {
@@ -64,6 +104,18 @@
     "/trades/{tradeId}": {
       "schema": { "$ref": "#/entities/Trade" },
       "description": "Trade offers between users"
+    },
+    "/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/Chat" },
+      "description": "Chat rooms"
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "Messages in a chat"
+    },
+    "/chats/{chatId}/signals/{signalId}": {
+      "schema": { "$ref": "#/entities/CallSignal" },
+      "description": "WebRTC signals for a chat"
     }
   }
 }

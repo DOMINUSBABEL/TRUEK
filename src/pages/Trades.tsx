@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArrowRightLeft } from 'lucide-react';
+import { ArrowRightLeft, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Trades() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,6 +34,36 @@ export default function Trades() {
     fetchTrades();
   }, [user]);
 
+  const startChat = async (otherUserId: string) => {
+    if (!user) return;
+    
+    // Check if chat already exists
+    const chatsRef = collection(db, 'chats');
+    const q = query(chatsRef, where('participants', 'array-contains', user.uid));
+    const snapshot = await getDocs(q);
+    
+    let existingChatId = null;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.participants.includes(otherUserId)) {
+        existingChatId = doc.id;
+      }
+    });
+
+    if (existingChatId) {
+      navigate(`/chat/${existingChatId}`);
+    } else {
+      // Create new chat
+      const newChatRef = doc(collection(db, 'chats'));
+      await setDoc(newChatRef, {
+        id: newChatRef.id,
+        participants: [user.uid, otherUserId],
+        updatedAt: new Date().toISOString()
+      });
+      navigate(`/chat/${newChatRef.id}`);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -49,6 +81,8 @@ export default function Trades() {
         <div className="space-y-4">
           {trades.map(trade => {
             const isMyOffer = trade.offererId === user.uid;
+            const otherUserId = isMyOffer ? trade.targetOwnerId : trade.offererId;
+            
             return (
               <div key={trade.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                 <div className="flex justify-between items-center mb-3">
@@ -60,9 +94,18 @@ export default function Trades() {
                   }`}>
                     {trade.status === 'pending' ? 'Pendiente' : trade.status === 'accepted' ? 'Aceptado' : trade.status === 'completed' ? 'Completado' : 'Rechazado'}
                   </span>
-                  <span className="text-xs text-gray-500">
-                    {isMyOffer ? 'Tú ofreciste' : 'Te ofrecieron'}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">
+                      {isMyOffer ? 'Tú ofreciste' : 'Te ofrecieron'}
+                    </span>
+                    <button 
+                      onClick={() => startChat(otherUserId)}
+                      className="p-1.5 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors"
+                      title="Chatear"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="flex items-center justify-between">

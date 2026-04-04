@@ -163,10 +163,44 @@ export default function ItemDetail() {
 
       {/* Fixed Bottom Action Bar */}
       {!isMyItem && (
-        <div className="fixed bottom-16 w-full max-w-md bg-white border-t border-gray-200 p-4 pb-safe">
+        <div className="fixed bottom-16 w-full max-w-md bg-white border-t border-gray-200 p-4 pb-safe flex space-x-3">
+          <button 
+            onClick={async () => {
+              if (!user) {
+                toast.error('Debes iniciar sesión para chatear');
+                return;
+              }
+              const chatsRef = collection(db, 'chats');
+              const q = query(chatsRef, where('participants', 'array-contains', user.uid));
+              const snapshot = await getDocs(q);
+              
+              let existingChatId = null;
+              snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.participants.includes(item.ownerId)) {
+                  existingChatId = doc.id;
+                }
+              });
+
+              if (existingChatId) {
+                navigate(`/chat/${existingChatId}`);
+              } else {
+                const newChatRef = doc(collection(db, 'chats'));
+                await setDoc(newChatRef, {
+                  id: newChatRef.id,
+                  participants: [user.uid, item.ownerId],
+                  updatedAt: new Date().toISOString()
+                });
+                navigate(`/chat/${newChatRef.id}`);
+              }
+            }}
+            className="flex-1 bg-white border-2 border-indigo-600 text-indigo-600 font-semibold py-3.5 px-4 rounded-xl shadow-sm hover:bg-indigo-50 transition-colors active:scale-95 flex justify-center items-center"
+          >
+            Chatear
+          </button>
           <button 
             onClick={handleOfferClick}
-            className="w-full bg-indigo-600 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg hover:bg-indigo-700 transition-colors active:scale-95"
+            className="flex-[2] bg-indigo-600 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg hover:bg-indigo-700 transition-colors active:scale-95"
           >
             {item.isAuction ? 'Participar en Subasta' : 'Ofrecer Trueque'}
           </button>

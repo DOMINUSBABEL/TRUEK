@@ -14,6 +14,7 @@ export default function AddItem() {
     title: '',
     description: '',
     condition: 'good',
+    category: 'electronics',
     lookingFor: '',
     location: '',
     isAuction: false,
@@ -39,6 +40,7 @@ export default function AddItem() {
         description: formData.description,
         imageUrl,
         condition: formData.condition,
+        category: formData.category,
         lookingFor: formData.lookingFor,
         location: formData.location || 'Medellín', // Default for MVP
         status: 'available',
@@ -146,15 +148,31 @@ export default function AddItem() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
-              <input
-                type="text"
-                placeholder="Ej. Medellín"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
-                value={formData.location}
-                onChange={e => setFormData({...formData, location: e.target.value})}
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+              <select
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                value={formData.category}
+                onChange={e => setFormData({...formData, category: e.target.value})}
+              >
+                <option value="electronics">Electrónica</option>
+                <option value="fashion">Moda</option>
+                <option value="home">Hogar</option>
+                <option value="sports">Deportes</option>
+                <option value="gaming">Videojuegos</option>
+                <option value="other">Otro</option>
+              </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+            <input
+              type="text"
+              placeholder="Ej. Medellín"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+              value={formData.location}
+              onChange={e => setFormData({...formData, location: e.target.value})}
+            />
           </div>
 
           <div>

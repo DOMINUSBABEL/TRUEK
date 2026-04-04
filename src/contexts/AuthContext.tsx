@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { requestNotificationPermission, setupMessageListener } from '../notifications';
 
 interface AuthContextType {
   user: User | null;
@@ -34,11 +35,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             photoURL: currentUser.photoURL || '',
             reputation: 0,
             verified: false,
+            tradeScore: 0,
             createdAt: new Date().toISOString(),
           };
           await setDoc(userDocRef, newUserData);
           setUserData(newUserData);
         }
+        
+        // Setup notifications
+        requestNotificationPermission(currentUser.uid);
+        setupMessageListener();
       } else {
         setUserData(null);
       }

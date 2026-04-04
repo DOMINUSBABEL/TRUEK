@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock, Search, Filter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -11,6 +11,11 @@ export default function Home() {
   const { user, signInWithGoogle } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     if (!user) {
@@ -36,6 +41,34 @@ export default function Home() {
     return () => unsubscribe();
   }, [user]);
 
+  const filteredItems = useMemo(() => {
+    let result = items;
+
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(item => 
+        item.title.toLowerCase().includes(term) || 
+        item.description.toLowerCase().includes(term)
+      );
+    }
+
+    // Category filter
+    if (selectedCategory !== 'all') {
+      result = result.filter(item => item.category === selectedCategory);
+    }
+
+    // Sorting
+    if (sortBy === 'oldest') {
+      result = [...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    } else if (sortBy === 'newest') {
+      // Already sorted by newest from Firestore, but re-sort just in case
+      result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    return result;
+  }, [items, searchTerm, selectedCategory, sortBy]);
+
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] p-6 text-center">
@@ -58,7 +91,46 @@ export default function Home() {
     <div className="p-4">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Descubre</h2>
-        <p className="text-gray-500 text-sm">Encuentra tu próximo trueque cerca de ti</p>
+        <p className="text-gray-500 text-sm mb-4">Encuentra tu próximo trueque cerca de ti</p>
+        
+        {/* Search and Filters */}
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Buscar objetos..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl transition-all outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <select 
+              className="bg-gray-100 text-sm px-3 py-2 rounded-lg border-none outline-none focus:ring-2 focus:ring-indigo-200"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">Todas las categorías</option>
+              <option value="electronics">Electrónica</option>
+              <option value="fashion">Moda</option>
+              <option value="home">Hogar</option>
+              <option value="sports">Deportes</option>
+              <option value="gaming">Videojuegos</option>
+              <option value="other">Otro</option>
+            </select>
+            
+            <select 
+              className="bg-gray-100 text-sm px-3 py-2 rounded-lg border-none outline-none focus:ring-2 focus:ring-indigo-200"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="newest">Más recientes</option>
+              <option value="oldest">Más antiguos</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -67,16 +139,25 @@ export default function Home() {
             <div key={i} className="animate-pulse bg-gray-200 rounded-2xl aspect-[3/4]"></div>
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">No hay artículos disponibles aún.</p>
-          <Link to="/add" className="text-indigo-600 font-medium mt-2 inline-block">
-            ¡Sé el primero en publicar!
-          </Link>
+          <p className="text-gray-500">No se encontraron artículos.</p>
+          {searchTerm || selectedCategory !== 'all' ? (
+            <button 
+              onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
+              className="text-indigo-600 font-medium mt-2 inline-block"
+            >
+              Limpiar filtros
+            </button>
+          ) : (
+            <Link to="/add" className="text-indigo-600 font-medium mt-2 inline-block">
+              ¡Sé el primero en publicar!
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
-          {items.map(item => (
+          {filteredItems.map(item => (
             <Link key={item.id} to={`/item/${item.id}`} className="group block">
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 mb-2">
                 <img
