@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
@@ -19,7 +19,7 @@ import ChatRoom from './pages/ChatRoom';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
@@ -33,7 +33,7 @@ export default function App() {
           <Route path="/chat/:id" element={<ChatRoom />} />
         </Routes>
         <Toaster position="top-center" />
-      </BrowserRouter>
+      </HashRouter>
     </AuthProvider>
   );
 }

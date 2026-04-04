@@ -80,12 +80,20 @@ export default function Home() {
         </div>
         <h1 className="text-4xl font-heading font-bold text-white mb-3 tracking-widest uppercase">Truekio</h1>
         <p className="text-gray-400 mb-10 text-sm max-w-[250px] leading-relaxed">Curate your collection. Exchange without money.</p>
-        <button
-          onClick={signInWithGoogle}
-          className="w-full max-w-sm bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 px-8 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover transition-all active:scale-95"
-        >
-          Enter Vault
-        </button>
+        <div className="w-full max-w-sm space-y-4">
+          <button
+            onClick={signInWithGoogle}
+            className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 px-8 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover transition-all active:scale-95"
+          >
+            Enter Vault
+          </button>
+          <button
+            onClick={signInAsGuest}
+            className="w-full bg-surface-light text-gray-300 text-xs font-bold tracking-widest uppercase py-4 px-8 rounded-full border border-white/10 hover:bg-surface transition-all active:scale-95"
+          >
+            Continue as Guest
+          </button>
+        </div>
       </div>
     );
   }
