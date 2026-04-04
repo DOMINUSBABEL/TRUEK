@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import toast from 'react-hot-toast';
 import { auth, db } from '../firebase';
 import { requestNotificationPermission, setupMessageListener } from '../notifications';
 
@@ -69,27 +70,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing in with Google', error);
-      throw error;
+      if (error.code === 'auth/popup-closed-by-user') {
+        toast('Inicio de sesión cancelado', { icon: 'ℹ️' });
+      } else {
+        toast.error('Error al iniciar sesión.');
+      }
     }
   };
 
   const signInAsGuest = async () => {
     try {
       await signInAnonymously(auth);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing in anonymously', error);
-      throw error;
+      toast.error('No se pudo iniciar como invitado.');
     }
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing out', error);
-      throw error;
+      toast.error('Error al cerrar sesión.');
     }
   };
 
