@@ -78,13 +78,13 @@ export default function AddItem() {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Publicar Artículo</h2>
+    <div className="p-6 pb-32 bg-neutral min-h-screen">
+      <h2 className="text-3xl font-heading font-bold text-white mb-8">Publish Asset</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Image Upload Area */}
         <div 
-          className="aspect-square w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center overflow-hidden relative"
+          className="aspect-square w-full bg-surface border-2 border-dashed border-white/20 rounded-[2rem] flex flex-col items-center justify-center overflow-hidden relative group"
         >
           {imageUrl ? (
             <>
@@ -92,7 +92,7 @@ export default function AddItem() {
               <button 
                 type="button"
                 onClick={() => setImageUrl('')}
-                className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full backdrop-blur-sm"
+                className="absolute top-4 right-4 bg-neutral/80 text-white p-2.5 rounded-full backdrop-blur-md hover:bg-neutral transition-colors border border-white/10"
               >
                 ✕
               </button>
@@ -100,42 +100,42 @@ export default function AddItem() {
           ) : (
             <div className="text-center p-6">
               <div className="flex justify-center space-x-4 mb-4">
-                <button type="button" className="p-4 bg-white rounded-full shadow-sm text-indigo-600">
+                <button type="button" className="p-4 bg-neutral rounded-full shadow-lg text-primary border border-white/5 hover:border-primary/50 transition-colors">
                   <Camera className="w-6 h-6" />
                 </button>
                 <button 
                   type="button" 
                   onClick={generatePlaceholderImage}
-                  className="p-4 bg-white rounded-full shadow-sm text-indigo-600"
+                  className="p-4 bg-neutral rounded-full shadow-lg text-primary border border-white/5 hover:border-primary/50 transition-colors"
                 >
                   <ImageIcon className="w-6 h-6" />
                 </button>
               </div>
-              <p className="text-sm text-gray-500 font-medium">Toma una foto o genera una de prueba</p>
+              <p className="text-xs font-bold tracking-widest uppercase text-gray-500">Take a photo or generate</p>
             </div>
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">¿Qué ofreces?</label>
+            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">What are you offering?</label>
             <input
               type="text"
               required
-              placeholder="Ej. Guitarra Eléctrica Fender"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+              placeholder="e.g. Fender Electric Guitar"
+              className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"
               value={formData.title}
               onChange={e => setFormData({...formData, title: e.target.value})}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Description</label>
             <textarea
               required
               rows={3}
-              placeholder="Cuenta los detalles, tiempo de uso, etc."
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none"
+              placeholder="Details, condition, etc."
+              className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-white placeholder-gray-600 text-sm"
               value={formData.description}
               onChange={e => setFormData({...formData, description: e.target.value})}
             />
@@ -143,61 +143,61 @@ export default function AddItem() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Condition</label>
               <select
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none"
                 value={formData.condition}
                 onChange={e => setFormData({...formData, condition: e.target.value})}
               >
-                <option value="new">Nuevo</option>
-                <option value="like-new">Como Nuevo</option>
-                <option value="good">Buen Estado</option>
-                <option value="fair">Aceptable</option>
+                <option value="new">New</option>
+                <option value="like-new">Like New</option>
+                <option value="good">Good</option>
+                <option value="fair">Acceptable</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+              <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Category</label>
               <select
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none"
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value})}
               >
-                <option value="electronics">Electrónica</option>
-                <option value="fashion">Moda</option>
-                <option value="home">Hogar</option>
-                <option value="sports">Deportes</option>
-                <option value="gaming">Videojuegos</option>
-                <option value="other">Otro</option>
+                <option value="electronics">Electronics</option>
+                <option value="fashion">Fashion</option>
+                <option value="home">Home</option>
+                <option value="sports">Sports</option>
+                <option value="gaming">Gaming</option>
+                <option value="other">Other</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">City</label>
             <input
               type="text"
-              placeholder="Ej. Medellín"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="e.g. Medellín"
+              className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"
               value={formData.location}
               onChange={e => setFormData({...formData, location: e.target.value})}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">¿Qué buscas a cambio?</label>
+            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Looking for</label>
             <input
               type="text"
-              placeholder="Ej. Consola de videojuegos, bicicleta..."
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="e.g. Gaming console, bike..."
+              className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"
               value={formData.lookingFor}
               onChange={e => setFormData({...formData, lookingFor: e.target.value})}
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-100">
+          <div className="flex items-center justify-between p-5 bg-tertiary/10 rounded-[2rem] border border-tertiary/20">
             <div>
-              <h4 className="font-medium text-amber-900">Subasta de Trueque</h4>
-              <p className="text-xs text-amber-700 mt-0.5">Recibe múltiples ofertas y elige la mejor</p>
+              <h4 className="font-heading font-bold text-tertiary">Barter Auction</h4>
+              <p className="text-[10px] font-bold tracking-widest uppercase text-tertiary/70 mt-1">Receive multiple offers</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
@@ -206,7 +206,7 @@ export default function AddItem() {
                 checked={formData.isAuction}
                 onChange={e => setFormData({...formData, isAuction: e.target.checked})}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              <div className="w-11 h-6 bg-surface border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary"></div>
             </label>
           </div>
         </div>
@@ -214,9 +214,9 @@ export default function AddItem() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 text-white font-semibold py-4 px-4 rounded-xl shadow-lg hover:bg-indigo-700 transition-colors active:scale-95 flex justify-center items-center"
+          className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover transition-colors flex justify-center items-center mt-8"
         >
-          {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Publicar Objeto'}
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Asset'}
         </button>
       </form>
     </div>

@@ -3,7 +3,7 @@ import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestor
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, Search, Filter } from 'lucide-react';
+import { MapPin, Clock, Search, Filter, Sparkles } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -74,63 +74,63 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] p-6 text-center">
-        <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
-          <span className="text-4xl">🔄</span>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-neutral p-6 text-center">
+        <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_30px_rgba(124,77,255,0.2)]">
+          <Sparkles className="w-10 h-10 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Truekio</h1>
-        <p className="text-gray-600 mb-8 text-lg">Tus cosas son tu moneda. Intercambia sin dinero.</p>
+        <h1 className="text-4xl font-heading font-bold text-white mb-3 tracking-widest uppercase">Truekio</h1>
+        <p className="text-gray-400 mb-10 text-sm max-w-[250px] leading-relaxed">Curate your collection. Exchange without money.</p>
         <button
           onClick={signInWithGoogle}
-          className="w-full max-w-sm bg-indigo-600 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:bg-indigo-700 transition-colors active:scale-95"
+          className="w-full max-w-sm bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 px-8 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover transition-all active:scale-95"
         >
-          Entrar con Google
+          Enter Vault
         </button>
       </div>
     );
   }
 
   return (
-    <div className="p-4">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Descubre</h2>
-        <p className="text-gray-500 text-sm mb-4">Encuentra tu próximo trueque cerca de ti</p>
+    <div className="p-6">
+      <div className="mb-8">
+        <h2 className="text-2xl font-heading font-bold text-white mb-1">Discover</h2>
+        <p className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-6">Find your next treasure</p>
         
         {/* Search and Filters */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input 
               type="text" 
-              placeholder="Buscar objetos..." 
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl transition-all outline-none"
+              placeholder="Search assets..." 
+              className="w-full pl-12 pr-4 py-3.5 bg-surface border border-white/5 focus:bg-surface-light focus:border-primary/50 rounded-full transition-all outline-none text-sm text-white placeholder-gray-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <select 
-              className="bg-gray-100 text-sm px-3 py-2 rounded-lg border-none outline-none focus:ring-2 focus:ring-indigo-200"
+              className="bg-surface text-gray-300 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-full border border-white/5 outline-none focus:border-primary/50 appearance-none"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              <option value="all">Todas las categorías</option>
-              <option value="electronics">Electrónica</option>
-              <option value="fashion">Moda</option>
-              <option value="home">Hogar</option>
-              <option value="sports">Deportes</option>
-              <option value="gaming">Videojuegos</option>
-              <option value="other">Otro</option>
+              <option value="all">All Categories</option>
+              <option value="electronics">Electronics</option>
+              <option value="fashion">Fashion</option>
+              <option value="home">Home</option>
+              <option value="sports">Sports</option>
+              <option value="gaming">Gaming</option>
+              <option value="other">Other</option>
             </select>
             
             <select 
-              className="bg-gray-100 text-sm px-3 py-2 rounded-lg border-none outline-none focus:ring-2 focus:ring-indigo-200"
+              className="bg-surface text-gray-300 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-full border border-white/5 outline-none focus:border-primary/50 appearance-none"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
-              <option value="newest">Más recientes</option>
-              <option value="oldest">Más antiguos</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
             </select>
           </div>
         </div>
@@ -139,51 +139,51 @@ export default function Home() {
       {loading ? (
         <div className="grid grid-cols-2 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="animate-pulse bg-gray-200 rounded-2xl aspect-[3/4]"></div>
+            <div key={i} className="animate-pulse bg-surface rounded-[2rem] aspect-[3/4] border border-white/5"></div>
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No se encontraron artículos.</p>
+        <div className="text-center py-16 bg-surface rounded-[2rem] border border-white/5">
+          <p className="text-gray-400 text-sm mb-4">No assets found.</p>
           {searchTerm || selectedCategory !== 'all' ? (
             <button 
               onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
-              className="text-indigo-600 font-medium mt-2 inline-block"
+              className="text-primary text-xs font-bold tracking-widest uppercase hover:text-primary-hover transition-colors"
             >
-              Limpiar filtros
+              Clear Filters
             </button>
           ) : (
-            <Link to="/add" className="text-indigo-600 font-medium mt-2 inline-block">
-              ¡Sé el primero en publicar!
+            <Link to="/add" className="text-primary text-xs font-bold tracking-widest uppercase hover:text-primary-hover transition-colors">
+              Be the first to publish
             </Link>
           )}
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {auctions.length > 0 && (
             <div>
-              <h3 className="text-lg font-bold text-amber-600 mb-3 flex items-center">
-                <Clock className="w-5 h-5 mr-1.5" />
-                Subastas Activas
+              <h3 className="text-sm font-bold tracking-widest text-tertiary uppercase mb-4 flex items-center">
+                <Clock className="w-4 h-4 mr-2" />
+                Active Auctions
               </h3>
               <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
                 {auctions.map(item => (
                   <Link key={item.id} to={`/item/${item.id}`} className="group block w-48 flex-shrink-0">
-                    <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-2 border-2 border-amber-400">
+                    <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-surface mb-3 border border-tertiary/30 shadow-[0_0_15px_rgba(255,215,0,0.1)]">
                       <img
                         src={item.imageUrl}
                         alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                        Subasta
+                      <div className="absolute top-3 left-3 bg-tertiary text-neutral text-[9px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+                        Auction
                       </div>
                     </div>
-                    <h3 className="font-semibold text-gray-900 line-clamp-1">{item.title}</h3>
-                    <div className="flex items-center text-xs text-gray-500 mt-1 space-x-2">
+                    <h3 className="font-heading font-semibold text-white line-clamp-1 text-sm px-1">{item.title}</h3>
+                    <div className="flex items-center text-[10px] font-bold tracking-widest uppercase text-gray-500 mt-1.5 space-x-2 px-1">
                       <span className="flex items-center">
-                        <MapPin className="w-3 h-3 mr-0.5" />
+                        <MapPin className="w-3 h-3 mr-1" />
                         {item.location || 'Local'}
                       </span>
                     </div>
@@ -194,26 +194,26 @@ export default function Home() {
           )}
 
           <div>
-            {auctions.length > 0 && <h3 className="text-lg font-bold text-gray-900 mb-3">Todos los Artículos</h3>}
+            {auctions.length > 0 && <h3 className="text-sm font-bold tracking-widest text-white uppercase mb-4">All Assets</h3>}
             <div className="grid grid-cols-2 gap-4">
               {regularItems.map(item => (
                 <Link key={item.id} to={`/item/${item.id}`} className="group block">
-                  <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 mb-2">
+                  <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-surface mb-3 border border-white/5">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
                   </div>
-                  <h3 className="font-semibold text-gray-900 line-clamp-1">{item.title}</h3>
-                  <div className="flex items-center text-xs text-gray-500 mt-1 space-x-2">
+                  <h3 className="font-heading font-semibold text-white line-clamp-1 text-sm px-1">{item.title}</h3>
+                  <div className="flex flex-col text-[9px] font-bold tracking-widest uppercase text-gray-500 mt-1.5 space-y-1 px-1">
                     <span className="flex items-center">
-                      <MapPin className="w-3 h-3 mr-0.5" />
+                      <MapPin className="w-3 h-3 mr-1" />
                       {item.location || 'Local'}
                     </span>
                     <span className="flex items-center">
-                      <Clock className="w-3 h-3 mr-0.5" />
+                      <Clock className="w-3 h-3 mr-1" />
                       {item.createdAt ? formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: es }) : ''}
                     </span>
                   </div>

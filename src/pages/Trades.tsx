@@ -145,76 +145,80 @@ export default function Trades() {
   if (!user) return null;
 
   return (
-    <div className="p-4 pb-24">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Mis Trueques</h2>
+    <div className="p-6 pb-32 bg-neutral min-h-screen">
+      <h2 className="text-3xl font-heading font-bold text-white mb-8">My Trades</h2>
       
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Cargando...</div>
+        <div className="text-center py-8 text-gray-500">Loading...</div>
       ) : trades.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-200">
-          <ArrowRightLeft className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No tienes trueques activos.</p>
+        <div className="text-center py-16 bg-surface rounded-[2rem] border border-white/5 shadow-lg">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ArrowRightLeft className="w-8 h-8 text-primary" />
+          </div>
+          <p className="text-gray-400 font-medium">No active trades.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {trades.map(trade => {
             const isMyOffer = trade.offererId === user.uid;
             const otherUserId = isMyOffer ? trade.targetOwnerId : trade.offererId;
             
             return (
-              <div key={trade.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <div className="flex justify-between items-center mb-3">
-                  <span className={`text-xs font-bold px-2 py-1 rounded uppercase tracking-wider ${
-                    trade.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                    trade.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                    trade.status === 'completed' ? 'bg-indigo-100 text-indigo-700' :
-                    'bg-red-100 text-red-700'
+              <div key={trade.id} className="bg-surface p-5 rounded-[2rem] border border-white/5 shadow-lg">
+                <div className="flex justify-between items-center mb-5">
+                  <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest border ${
+                    trade.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                    trade.status === 'accepted' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                    trade.status === 'completed' ? 'bg-primary/10 text-primary border-primary/20' :
+                    'bg-red-500/10 text-red-500 border-red-500/20'
                   }`}>
-                    {trade.status === 'pending' ? 'Pendiente' : trade.status === 'accepted' ? 'Aceptado' : trade.status === 'completed' ? 'Completado' : 'Rechazado'}
+                    {trade.status === 'pending' ? 'Pending' : trade.status === 'accepted' ? 'Accepted' : trade.status === 'completed' ? 'Completed' : 'Rejected'}
                   </span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">
-                      {isMyOffer ? 'Tú ofreciste' : 'Te ofrecieron'}
+                  <div className="flex items-center space-x-3">
+                    <span className="text-xs font-bold tracking-widest uppercase text-gray-500">
+                      {isMyOffer ? 'You offered' : 'They offered'}
                     </span>
                     <button 
                       onClick={() => startChat(otherUserId)}
-                      className="p-1.5 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors"
-                      title="Chatear"
+                      className="p-2.5 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors border border-primary/20"
+                      title="Chat"
                     >
                       <MessageCircle className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex-1 flex flex-col items-center text-center">
-                    <img src={isMyOffer ? trade.offeredItem?.imageUrl : trade.targetItem?.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover mb-2 border border-gray-200" />
-                    <span className="text-sm font-medium text-gray-900 line-clamp-1">{isMyOffer ? trade.offeredItem?.title : trade.targetItem?.title}</span>
-                    <span className="text-xs text-gray-500">Tu artículo</span>
+                    <img src={isMyOffer ? trade.offeredItem?.imageUrl : trade.targetItem?.imageUrl} alt="" className="w-20 h-20 rounded-2xl object-cover mb-3 border border-white/10 shadow-md" />
+                    <span className="text-sm font-heading font-bold text-white line-clamp-1">{isMyOffer ? trade.offeredItem?.title : trade.targetItem?.title}</span>
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-tertiary mt-1">Your Asset</span>
                   </div>
-                  <ArrowRightLeft className="w-5 h-5 text-gray-400 mx-4 flex-shrink-0" />
+                  <div className="w-10 h-10 rounded-full bg-neutral flex items-center justify-center mx-2 border border-white/5 flex-shrink-0">
+                    <ArrowRightLeft className="w-4 h-4 text-gray-400" />
+                  </div>
                   <div className="flex-1 flex flex-col items-center text-center">
-                    <img src={isMyOffer ? trade.targetItem?.imageUrl : trade.offeredItem?.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover mb-2 border border-gray-200" />
-                    <span className="text-sm font-medium text-gray-900 line-clamp-1">{isMyOffer ? trade.targetItem?.title : trade.offeredItem?.title}</span>
-                    <span className="text-xs text-gray-500">Su artículo</span>
+                    <img src={isMyOffer ? trade.targetItem?.imageUrl : trade.offeredItem?.imageUrl} alt="" className="w-20 h-20 rounded-2xl object-cover mb-3 border border-white/10 shadow-md" />
+                    <span className="text-sm font-heading font-bold text-white line-clamp-1">{isMyOffer ? trade.targetItem?.title : trade.offeredItem?.title}</span>
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-gray-500 mt-1">Their Asset</span>
                   </div>
                 </div>
 
                 {!isMyOffer && trade.status === 'pending' && (
-                  <div className="flex space-x-2 mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex space-x-3 mt-6 pt-5 border-t border-white/5">
                     <button 
                       onClick={() => handleReject(trade.id)}
-                      className="flex-1 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center"
+                      className="flex-1 py-3.5 bg-red-500/10 text-red-500 text-xs font-bold tracking-widest uppercase rounded-full hover:bg-red-500/20 transition-colors flex items-center justify-center border border-red-500/20"
                     >
-                      <XCircle className="w-4 h-4 mr-1.5" />
-                      Rechazar
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Reject
                     </button>
                     <button 
                       onClick={() => handleAccept(trade)}
-                      className="flex-1 py-2 bg-green-50 text-green-700 font-medium rounded-lg hover:bg-green-100 transition-colors flex items-center justify-center"
+                      className="flex-1 py-3.5 bg-primary text-white text-xs font-bold tracking-widest uppercase rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center shadow-[0_0_15px_rgba(124,77,255,0.3)]"
                     >
-                      <CheckCircle className="w-4 h-4 mr-1.5" />
-                      Aceptar
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Accept
                     </button>
                   </div>
                 )}

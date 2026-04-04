@@ -93,44 +93,45 @@ export default function Challenge() {
   };
 
   return (
-    <div className="p-4 pb-24">
-      <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white mb-8 shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">El Reto del Trueque</h2>
-          <Trophy className="w-8 h-8 text-yellow-300" />
+    <div className="p-6 pb-32 bg-neutral min-h-screen">
+      <div className="bg-gradient-to-br from-primary to-tertiary rounded-[2rem] p-8 text-white mb-8 shadow-[0_0_30px_rgba(124,77,255,0.3)] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+        <div className="flex items-center justify-between mb-4 relative z-10">
+          <h2 className="text-3xl font-heading font-bold">Truekio Challenge</h2>
+          <Trophy className="w-10 h-10 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" />
         </div>
-        <p className="text-indigo-100 text-sm leading-relaxed mb-4">
-          Inspirado en el reto del clip rojo. Empieza con algo pequeño y haz trueques hasta conseguir algo de gran valor. ¡Sube en la tabla de posiciones!
+        <p className="text-white/80 text-sm leading-relaxed mb-6 relative z-10 font-medium">
+          Inspired by the red paperclip challenge. Start small and trade your way up to something of great value. Climb the leaderboard!
         </p>
         
         {user && !activeChallenge && !loading && (
           <button 
             onClick={handleStartClick}
-            className="bg-white text-indigo-600 font-bold py-2 px-4 rounded-xl text-sm w-full shadow-sm flex justify-center items-center"
+            className="bg-white text-primary font-bold tracking-widest uppercase text-xs py-4 px-6 rounded-full w-full shadow-lg flex justify-center items-center hover:bg-gray-100 transition-colors relative z-10"
           >
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Iniciar mi Reto
+            <PlusCircle className="w-5 h-5 mr-2" />
+            Start My Challenge
           </button>
         )}
       </div>
 
       {activeChallenge && challengeHistory.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2 text-indigo-600" />
-            Tu Evolución
+        <div className="mb-10">
+          <h3 className="text-2xl font-heading font-bold text-white mb-6 flex items-center">
+            <TrendingUp className="w-6 h-6 mr-3 text-primary" />
+            Your Evolution
           </h3>
           <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide items-center">
             {challengeHistory.map((item, index) => (
               <React.Fragment key={item.id}>
                 <div className="flex-shrink-0 w-32">
-                  <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 mb-2 border-2 border-indigo-100">
+                  <div className="aspect-square rounded-2xl overflow-hidden bg-surface mb-3 border border-white/10 shadow-lg">
                     <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                   </div>
-                  <p className="text-xs font-semibold text-center text-gray-900 line-clamp-1">{item.title}</p>
+                  <p className="text-xs font-bold text-center text-gray-300 line-clamp-1">{item.title}</p>
                 </div>
                 {index < challengeHistory.length - 1 && (
-                  <ArrowRight className="w-6 h-6 text-gray-300 flex-shrink-0" />
+                  <ArrowRight className="w-6 h-6 text-gray-600 flex-shrink-0" />
                 )}
               </React.Fragment>
             ))}
@@ -139,60 +140,60 @@ export default function Challenge() {
       )}
 
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-xl font-bold text-gray-900 flex items-center">
-          <Medal className="w-5 h-5 mr-2 text-amber-500" />
-          Top Truequeros
+        <h3 className="text-2xl font-heading font-bold text-white flex items-center">
+          <Medal className="w-6 h-6 mr-3 text-yellow-500" />
+          Top Traders
         </h3>
       </div>
 
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="animate-pulse flex items-center p-4 bg-gray-100 rounded-xl">
-              <div className="w-12 h-12 bg-gray-200 rounded-full mr-4"></div>
+            <div key={i} className="animate-pulse flex items-center p-5 bg-surface rounded-[2rem] border border-white/5">
+              <div className="w-14 h-14 bg-white/5 rounded-full mr-4"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-4 bg-white/5 rounded w-1/2 mb-3"></div>
+                <div className="h-3 bg-white/5 rounded w-1/4"></div>
               </div>
             </div>
           ))}
         </div>
       ) : leaders.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          Aún no hay líderes. ¡Sé el primero en hacer un trueque!
+        <div className="text-center py-12 text-gray-500 bg-surface rounded-[2rem] border border-white/5">
+          No leaders yet. Be the first to make a trade!
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {leaders.map((leader, index) => (
-            <div key={leader.id} className="flex items-center p-4 bg-white border border-gray-100 rounded-xl shadow-sm relative overflow-hidden">
+            <div key={leader.id} className="flex items-center p-5 bg-surface border border-white/5 rounded-[2rem] shadow-lg relative overflow-hidden group hover:bg-white/5 transition-colors">
               {index < 3 && (
-                <div className={`absolute top-0 left-0 w-1 h-full ${index === 0 ? 'bg-yellow-400' : index === 1 ? 'bg-gray-300' : 'bg-amber-600'}`}></div>
+                <div className={`absolute top-0 left-0 w-1.5 h-full ${index === 0 ? 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : index === 1 ? 'bg-gray-300' : 'bg-amber-600'}`}></div>
               )}
               
-              <div className="w-8 font-bold text-gray-400 flex justify-center">
-                {index === 0 ? <Medal className="w-6 h-6 text-yellow-400" /> : 
-                 index === 1 ? <Medal className="w-6 h-6 text-gray-400" /> : 
-                 index === 2 ? <Medal className="w-6 h-6 text-amber-600" /> : 
+              <div className="w-10 font-heading font-bold text-gray-500 flex justify-center text-lg">
+                {index === 0 ? <Medal className="w-7 h-7 text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]" /> : 
+                 index === 1 ? <Medal className="w-7 h-7 text-gray-300" /> : 
+                 index === 2 ? <Medal className="w-7 h-7 text-amber-600" /> : 
                  `#${index + 1}`}
               </div>
               
               <img 
-                src={leader.photoURL || `https://ui-avatars.com/api/?name=${leader.displayName}`} 
+                src={leader.photoURL || `https://ui-avatars.com/api/?name=${leader.displayName}&background=7C4DFF&color=fff`} 
                 alt={leader.displayName} 
-                className="w-12 h-12 rounded-full border-2 border-gray-50 mx-3"
+                className="w-14 h-14 rounded-full border-2 border-white/10 mx-4"
                 referrerPolicy="no-referrer"
               />
               
               <div className="flex-1">
-                <p className="font-bold text-gray-900">{leader.displayName}</p>
-                <p className="text-xs text-gray-500 flex items-center">
+                <p className="font-heading font-bold text-white text-lg">{leader.displayName}</p>
+                <p className="text-xs text-yellow-500 flex items-center font-bold mt-1">
                   ⭐ {leader.reputation || 5.0}
                 </p>
               </div>
               
               <div className="text-right">
-                <p className="text-lg font-black text-indigo-600">{leader.tradeScore || 0}</p>
-                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Puntos</p>
+                <p className="text-2xl font-black text-primary drop-shadow-[0_0_10px_rgba(124,77,255,0.3)]">{leader.tradeScore || 0}</p>
+                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">Points</p>
               </div>
             </div>
           ))}
@@ -201,23 +202,23 @@ export default function Challenge() {
 
       {/* Start Challenge Modal */}
       {showStartModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Elige tu objeto inicial</h3>
-              <button onClick={() => setShowStartModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-surface border border-white/10 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-8 animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-heading font-bold text-white">Choose your starting item</h3>
+              <button onClick={() => setShowStartModal(false)} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">✕</button>
             </div>
             
             {myItems.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">No tienes artículos publicados para empezar el reto.</p>
+              <div className="text-center py-12 bg-neutral rounded-2xl border border-white/5">
+                <p className="text-gray-400 mb-4 font-medium">You don't have any published items to start the challenge.</p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-[50vh] overflow-y-auto mb-6">
+              <div className="space-y-3 max-h-[50vh] overflow-y-auto mb-8 pr-2 custom-scrollbar">
                 {myItems.map(myItem => (
                   <label 
                     key={myItem.id} 
-                    className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${selectedItem === myItem.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'}`}
+                    className={`flex items-center p-4 border rounded-2xl cursor-pointer transition-all ${selectedItem === myItem.id ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(124,77,255,0.1)]' : 'border-white/10 bg-neutral hover:bg-white/5'}`}
                   >
                     <input 
                       type="radio" 
@@ -227,12 +228,12 @@ export default function Challenge() {
                       onChange={() => setSelectedItem(myItem.id)}
                       className="sr-only"
                     />
-                    <img src={myItem.imageUrl} alt={myItem.title} className="w-12 h-12 rounded-lg object-cover mr-3" />
+                    <img src={myItem.imageUrl} alt={myItem.title} className="w-14 h-14 rounded-xl object-cover mr-4 border border-white/10" />
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900 text-sm">{myItem.title}</p>
+                      <p className="font-bold text-white text-sm">{myItem.title}</p>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedItem === myItem.id ? 'border-indigo-600' : 'border-gray-300'}`}>
-                      {selectedItem === myItem.id && <div className="w-3 h-3 bg-indigo-600 rounded-full" />}
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedItem === myItem.id ? 'border-primary' : 'border-gray-600'}`}>
+                      {selectedItem === myItem.id && <div className="w-3 h-3 bg-primary rounded-full shadow-[0_0_8px_rgba(124,77,255,0.8)]" />}
                     </div>
                   </label>
                 ))}
@@ -243,9 +244,9 @@ export default function Challenge() {
               <button
                 onClick={startChallenge}
                 disabled={!selectedItem}
-                className="w-full bg-indigo-600 disabled:bg-gray-300 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+                className="w-full bg-primary disabled:bg-surface-light disabled:text-gray-500 text-white font-bold tracking-widest uppercase text-xs py-4 rounded-full transition-all shadow-[0_0_20px_rgba(124,77,255,0.3)] disabled:shadow-none hover:bg-primary-hover"
               >
-                Comenzar Reto
+                Start Challenge
               </button>
             )}
           </div>
