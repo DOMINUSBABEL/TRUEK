@@ -39,8 +39,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             tradeScore: 0,
             createdAt: new Date().toISOString(),
           };
-          await setDoc(userDocRef, newUserData);
-          setUserData(newUserData);
+          try {
+            await setDoc(userDocRef, newUserData);
+            setUserData(newUserData);
+          } catch (error) {
+            console.error('Error creating user profile:', error);
+            // Even if creation fails, set userData to prevent breaking UI
+            setUserData(newUserData);
+          }
         }
         
         // Setup notifications (safely)
