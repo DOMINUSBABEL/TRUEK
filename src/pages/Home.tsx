@@ -8,7 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function Home() {
-  const { user, signInWithGoogle } = useAuth();
+  const { user, signInWithGoogle, signInAsGuest } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
