@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -11,6 +11,7 @@ export default function Trades() {
   const navigate = useNavigate();
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchTrades = async () => {
     if (!user) return;
@@ -144,22 +145,63 @@ export default function Trades() {
 
   if (!user) return null;
 
+  const filteredTrades = trades.filter(trade => {
+    const query = searchQuery.toLowerCase();
+    const isMyOffer = trade.offererId === user.uid;
+    const myItemTitle = (isMyOffer ? trade.offeredItem?.title : trade.targetItem?.title) || '';
+    const theirItemTitle = (isMyOffer ? trade.targetItem?.title : trade.offeredItem?.title) || '';
+    
+    return myItemTitle.toLowerCase().includes(query) || 
+           theirItemTitle.toLowerCase().includes(query) ||
+           trade.status.toLowerCase().includes(query);
+  });
+
   return (
     <div className="p-6 pb-32 bg-neutral min-h-screen">
-      <h2 className="text-3xl font-heading font-bold text-white mb-8">My Trades</h2>
+      <h2 className="text-3xl font-heading font-bold text-white mb-6">My Trades</h2>
+      
+      <div className="mb-8 relative">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          placeholder="Search by item title or status..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-11 pr-4 py-3.5 bg-surface border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-sm"
+        />
+      </div>
       
       {loading ? (
         <div className="text-center py-8 text-gray-500">Loading...</div>
-      ) : trades.length === 0 ? (
-        <div className="text-center py-16 bg-surface rounded-[2rem] border border-white/5 shadow-lg">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ArrowRightLeft className="w-8 h-8 text-primary" />
+      ) : filteredTrades.length === 0 ? (
+        <div className="text-center py-16 bg-surface rounded-[2rem] border border-white/5 shadow-lg flex flex-col items-center">
+          <div className="relative w-32 h-32 mb-6">
+            <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
+            <div className="relative w-full h-full bg-surface-light rounded-full border border-white/10 flex items-center justify-center shadow-xl">
+              <Inbox className="w-12 h-12 text-primary/80" />
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-neutral rounded-full flex items-center justify-center border border-white/10 shadow-lg">
+                <Search className="w-4 h-4 text-gray-400" />
+              </div>
+            </div>
           </div>
-          <p className="text-gray-400 font-medium">No active trades.</p>
+          <h3 className="text-xl font-heading font-bold text-white mb-2">No trades found</h3>
+          <p className="text-gray-400 font-medium max-w-xs mb-8">
+            {searchQuery ? "We couldn't find any trades matching your search." : "You haven't made or received any trade offers yet."}
+          </p>
+          {!searchQuery && (
+            <button 
+              onClick={() => navigate('/')}
+              className="bg-primary hover:bg-primary-hover text-white text-xs font-bold tracking-widest uppercase py-3.5 px-8 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(124,77,255,0.3)]"
+            >
+              Explore Items
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
-          {trades.map(trade => {
+          {filteredTrades.map(trade => {
             const isMyOffer = trade.offererId === user.uid;
             const otherUserId = isMyOffer ? trade.targetOwnerId : trade.offererId;
             

@@ -56,14 +56,15 @@ export default function Profile() {
           {user.displayName}
         </h1>
         
-        <div className="flex items-center space-x-2 mb-8">
-          <div className="flex text-tertiary">
+        <div className="flex items-center space-x-3 mb-8 bg-surface-light/50 px-4 py-2 rounded-full border border-white/5 shadow-inner">
+          <div className="flex text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">
             {[1, 2, 3, 4, 5].map(i => (
-              <Star key={i} className="w-3.5 h-3.5 fill-current" />
+              <Star key={i} className="w-4 h-4 fill-current" />
             ))}
           </div>
-          <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-            Reputation Score {userData.reputation || '9.8'}
+          <div className="w-px h-4 bg-white/10"></div>
+          <span className="text-xs font-bold tracking-widest text-white uppercase">
+            {userData.reputation || '9.8'} <span className="text-gray-500">Score</span>
           </span>
         </div>
 
@@ -98,19 +99,28 @@ export default function Profile() {
         {loading ? (
           <div className="text-center py-8 text-gray-500">Loading...</div>
         ) : myItems.length === 0 ? (
-          <div className="bg-surface rounded-[2rem] p-10 text-center border border-white/5 flex flex-col items-center">
-            <div className="w-16 h-16 bg-surface-light rounded-full flex items-center justify-center mb-6">
-              <LayoutGrid className="w-6 h-6 text-gray-400" />
+          <div className="bg-surface rounded-[2rem] p-10 text-center border border-white/5 flex flex-col items-center relative overflow-hidden shadow-lg">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-tertiary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+            
+            <div className="relative w-24 h-24 mb-6">
+              <div className="absolute inset-0 bg-surface-light rounded-full border border-white/10 shadow-xl flex items-center justify-center z-10">
+                <LayoutGrid className="w-10 h-10 text-gray-400" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30 z-20 animate-bounce">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
             </div>
-            <h3 className="text-xl font-heading font-medium text-white mb-3 italic">
+            
+            <h3 className="text-xl font-heading font-medium text-white mb-3 italic relative z-10">
               Your vault awaits its first treasure
             </h3>
-            <p className="text-sm text-gray-400 mb-8 max-w-[250px] leading-relaxed">
+            <p className="text-sm text-gray-400 mb-8 max-w-[250px] leading-relaxed relative z-10">
               Curate your collection of digital assets and witness the expansion of your legacy.
             </p>
             <button 
               onClick={() => navigate('/add')}
-              className="bg-primary hover:bg-primary-hover text-white text-xs font-bold tracking-widest uppercase py-4 px-8 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(124,77,255,0.3)]"
+              className="bg-primary hover:bg-primary-hover text-white text-xs font-bold tracking-widest uppercase py-4 px-8 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(124,77,255,0.3)] relative z-10"
             >
               Initiate Curator
             </button>

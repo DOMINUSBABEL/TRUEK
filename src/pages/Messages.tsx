@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
-import { MessageCircle, ChevronRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { MessageCircle, ChevronRight, MailOpen } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function Messages() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,12 +71,25 @@ export default function Messages() {
         </div>
       ) : chats.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-surface rounded-[2rem] border border-white/5 shadow-lg">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <MessageCircle className="w-8 h-8 text-primary" />
+          <div className="relative w-32 h-32 mb-6">
+            <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
+            <div className="relative w-full h-full bg-surface-light rounded-full border border-white/10 flex items-center justify-center shadow-xl">
+              <MailOpen className="w-12 h-12 text-primary/80" />
+              <div className="absolute -top-2 -right-2 w-10 h-10 bg-neutral rounded-full flex items-center justify-center border border-white/10 shadow-lg">
+                <MessageCircle className="w-4 h-4 text-gray-400" />
+              </div>
+            </div>
           </div>
-          <p className="text-gray-400 font-medium max-w-xs">
-            No messages yet. Chats will appear here when you start a trade.
+          <h3 className="text-xl font-heading font-bold text-white mb-2">Your inbox is quiet</h3>
+          <p className="text-gray-400 font-medium max-w-xs mb-8">
+            Start a trade to open a direct channel with other curators.
           </p>
+          <button 
+            onClick={() => navigate('/trades')}
+            className="bg-primary hover:bg-primary-hover text-white text-xs font-bold tracking-widest uppercase py-3.5 px-8 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(124,77,255,0.3)]"
+          >
+            View Trades
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
