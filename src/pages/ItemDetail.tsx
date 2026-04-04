@@ -55,7 +55,9 @@ export default function ItemDetail() {
       toast.error('Debes iniciar sesión para hacer una oferta');
       return;
     }
-    fetchMyItems();
+    if (myItems.length === 0) {
+      fetchMyItems();
+    }
     setShowOfferModal(true);
   };
 
