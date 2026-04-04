@@ -76,7 +76,7 @@ export default function Home() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-neutral p-6 text-center">
         <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_30px_rgba(124,77,255,0.2)]">
-          <Sparkles className="w-10 h-10 text-primary" />
+          <ArrowRightLeft className="w-10 h-10 text-primary" />
         </div>
         <h1 className="text-4xl font-heading font-bold text-white mb-3 tracking-widest uppercase">Truekio</h1>
         <p className="text-gray-400 mb-10 text-sm max-w-[250px] leading-relaxed">Curate your collection. Exchange without money.</p>

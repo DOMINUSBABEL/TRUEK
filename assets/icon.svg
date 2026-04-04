@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <rect width="1024" height="1024" fill="#1a1a1a" />
+  <g transform="translate(262, 312)">
+    <!-- Right pointing arrow (top) -->
+    <path d="M 0,100 L 400,100" stroke="#7C4DFF" stroke-width="80" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 300,0 L 400,100 L 300,200" stroke="#7C4DFF" stroke-width="80" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Left pointing arrow (bottom) -->
+    <path d="M 500,300 L 100,300" stroke="#10B981" stroke-width="80" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 200,200 L 100,300 L 200,400" stroke="#10B981" stroke-width="80" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>
