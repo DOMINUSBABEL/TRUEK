@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trophy, TrendingUp, Medal } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Challenge() {
   const [leaders, setLeaders] = useState<any[]>([]);
@@ -18,7 +19,7 @@ export default function Challenge() {
         const snapshot = await getDocs(q);
         setLeaders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
-        console.error("Error fetching leaderboard:", error);
+        toast.error("Error al cargar la clasificación");
       } finally {
         setLoading(false);
       }

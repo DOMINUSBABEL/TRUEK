@@ -3,6 +3,7 @@ import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestor
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { MapPin, Clock, Search, Filter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -34,7 +35,7 @@ export default function Home() {
       setItems(itemsData);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching items:", error);
+      toast.error("Error al cargar los artículos");
       setLoading(false);
     });
 

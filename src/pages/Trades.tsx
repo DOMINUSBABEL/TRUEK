@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, or, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 export default function Trades() {
@@ -25,7 +26,7 @@ export default function Trades() {
         const snapshot = await getDocs(q);
         setTrades(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
-        console.error("Error fetching trades:", error);
+        toast.error("Error al cargar los trueques");
       } finally {
         setLoading(false);
       }

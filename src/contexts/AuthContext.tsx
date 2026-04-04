@@ -3,6 +3,7 @@ import { User, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged 
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { requestNotificationPermission, setupMessageListener } from '../notifications';
+import toast from 'react-hot-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -59,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error('Error signing in with Google', error);
+      toast.error('Error al iniciar sesión con Google');
       throw error;
     }
   };
@@ -68,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error('Error signing out', error);
+      toast.error('Error al cerrar sesión');
       throw error;
     }
   };

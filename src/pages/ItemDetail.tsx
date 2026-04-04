@@ -34,7 +34,7 @@ export default function ItemDetail() {
           }
         }
       } catch (error) {
-        console.error("Error fetching item:", error);
+        toast.error("Error al cargar el artículo");
       } finally {
         setLoading(false);
       }
@@ -76,7 +76,6 @@ export default function ItemDetail() {
       toast.success('¡Oferta enviada con éxito!');
       setShowOfferModal(false);
     } catch (error) {
-      console.error("Error submitting offer:", error);
       toast.error('Hubo un error al enviar la oferta');
     }
   };

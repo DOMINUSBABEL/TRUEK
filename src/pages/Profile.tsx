@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import toast from 'react-hot-toast';
 import { db } from '../firebase';
 import { LogOut, ShieldCheck, Trophy, Settings } from 'lucide-react';
 
@@ -17,7 +18,7 @@ export default function Profile() {
         const snapshot = await getDocs(q);
         setMyItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
-        console.error("Error fetching my items:", error);
+        toast.error("Error al cargar mis artículos");
       } finally {
         setLoading(false);
       }

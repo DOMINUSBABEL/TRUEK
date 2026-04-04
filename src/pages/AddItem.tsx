@@ -51,7 +51,6 @@ export default function AddItem() {
       toast.success('¡Artículo publicado con éxito!');
       navigate('/');
     } catch (error) {
-      console.error('Error adding item:', error);
       toast.error('Hubo un error al publicar el artículo');
     } finally {
       setLoading(false);

@@ -71,7 +71,6 @@ export default function ChatRoom() {
         updatedAt: new Date().toISOString()
       });
     } catch (error) {
-      console.error("Error sending message:", error);
       toast.error("Error al enviar mensaje");
     }
   };
