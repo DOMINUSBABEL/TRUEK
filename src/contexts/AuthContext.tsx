@@ -55,9 +55,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUserData(newUserData);
         }
         
-        // Setup notifications
-        requestNotificationPermission(currentUser.uid);
-        setupMessageListener();
+        // Setup notifications (safely)
+        try {
+          requestNotificationPermission(currentUser.uid);
+          setupMessageListener();
+        } catch (err) {
+          console.warn("Notifications not supported in this environment", err);
+        }
       } else {
         setUserData(null);
       }
