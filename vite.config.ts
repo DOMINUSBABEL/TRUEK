@@ -17,6 +17,16 @@ export default defineConfig(({mode}) => {
     },
     build: {
       target: 'es2015',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            react: ['react', 'react-dom', 'react-router-dom'],
+            firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+            icons: ['lucide-react'],
+            date: ['date-fns']
+          }
+        }
+      }
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
