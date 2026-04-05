@@ -195,7 +195,8 @@ export default function ItemDetail() {
       <div className="relative aspect-square bg-surface">
         <button 
           onClick={() => navigate(-1)}
-          className="absolute top-6 left-6 z-10 bg-neutral/50 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/10 hover:bg-neutral/80 transition-colors"
+          aria-label="Volver"
+          className="absolute top-6 left-6 z-10 bg-neutral/50 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/10 hover:bg-neutral/80 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
         >
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
@@ -352,7 +353,11 @@ export default function ItemDetail() {
           <div className="bg-surface w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] border border-white/10 overflow-hidden flex flex-col max-h-[80vh] shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95">
             <div className="p-6 border-b border-white/5 flex justify-between items-center">
               <h3 className="text-lg font-heading font-bold text-white">Elige qué ofrecer</h3>
-              <button onClick={() => setShowOfferModal(false)} className="text-gray-400 hover:text-white transition-colors">
+              <button
+                onClick={() => setShowOfferModal(false)}
+                aria-label="Cerrar"
+                className="text-gray-400 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-full w-8 h-8 flex items-center justify-center"
+              >
                 ✕
               </button>
             </div>

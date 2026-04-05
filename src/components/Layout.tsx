@@ -25,10 +25,17 @@ export default function Layout() {
           </Link>
           {user && (
             <div className="flex items-center space-x-4">
-              <button className="text-gray-400 hover:text-white transition-colors">
+              <button
+                aria-label="Notificaciones"
+                className="text-gray-400 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-full p-1"
+              >
                 <Bell className="w-5 h-5" />
               </button>
-              <Link to="/profile">
+              <Link
+                to="/profile"
+                aria-label="Perfil de usuario"
+                className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-full block"
+              >
                 <img
                   src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=7C4DFF&color=fff`}
                   alt="Avatar"
@@ -55,8 +62,9 @@ export default function Layout() {
                 <Link
                   key={item.path}
                   to={item.path}
+                  aria-label={item.label}
                   className={cn(
-                    "flex flex-col items-center justify-center w-16 h-14 rounded-2xl transition-all duration-300",
+                    "flex flex-col items-center justify-center w-16 h-14 rounded-2xl transition-all duration-300 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
                     isActive 
                       ? "bg-primary/20 text-primary" 
                       : "text-gray-500 hover:text-gray-300"
