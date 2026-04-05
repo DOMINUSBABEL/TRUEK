@@ -92,7 +92,8 @@ export default function AddItem() {
               <button 
                 type="button"
                 onClick={() => setImageUrl('')}
-                className="absolute top-4 right-4 bg-neutral/80 text-white p-2.5 rounded-full backdrop-blur-md hover:bg-neutral transition-colors border border-white/10"
+                aria-label="Eliminar imagen"
+                className="absolute top-4 right-4 bg-neutral/80 text-white p-2.5 rounded-full backdrop-blur-md hover:bg-neutral transition-colors border border-white/10 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               >
                 ✕
               </button>
@@ -100,13 +101,18 @@ export default function AddItem() {
           ) : (
             <div className="text-center p-6">
               <div className="flex justify-center space-x-4 mb-4">
-                <button type="button" className="p-4 bg-neutral rounded-full shadow-lg text-primary border border-white/5 hover:border-primary/50 transition-colors">
+                <button
+                  type="button"
+                  aria-label="Tomar foto"
+                  className="p-4 bg-neutral rounded-full shadow-lg text-primary border border-white/5 hover:border-primary/50 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                >
                   <Camera className="w-6 h-6" />
                 </button>
                 <button 
                   type="button" 
                   onClick={generatePlaceholderImage}
-                  className="p-4 bg-neutral rounded-full shadow-lg text-primary border border-white/5 hover:border-primary/50 transition-colors"
+                  aria-label="Generar imagen de prueba"
+                  className="p-4 bg-neutral rounded-full shadow-lg text-primary border border-white/5 hover:border-primary/50 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 >
                   <ImageIcon className="w-6 h-6" />
                 </button>
