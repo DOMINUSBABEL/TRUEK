@@ -88,7 +88,11 @@ export default function ChatRoom() {
       {/* Header */}
       <div className="bg-surface/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between sticky top-16 z-10">
         <div className="flex items-center">
-          <button onClick={() => navigate(-1)} className="mr-3 text-gray-400 hover:text-white transition-colors">
+          <button
+            onClick={() => navigate(-1)}
+            aria-label="Volver"
+            className="mr-3 text-gray-400 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded-full p-1"
+          >
             <ArrowLeft className="w-6 h-6" />
           </button>
           {otherUser && (
@@ -103,7 +107,11 @@ export default function ChatRoom() {
             </div>
           )}
         </div>
-        <button onClick={startVideoCall} className="p-2.5 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors border border-primary/20">
+        <button
+          onClick={startVideoCall}
+          aria-label="Iniciar videollamada"
+          className="p-2.5 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors border border-primary/20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+        >
           <Video className="w-5 h-5" />
         </button>
       </div>
@@ -145,7 +153,8 @@ export default function ChatRoom() {
           <button 
             type="submit" 
             disabled={!newMessage.trim()}
-            className="p-3.5 bg-primary text-white rounded-full disabled:bg-surface-light disabled:text-gray-500 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors shadow-[0_0_15px_rgba(124,77,255,0.3)] disabled:shadow-none"
+            aria-label="Enviar mensaje"
+            className="p-3.5 bg-primary text-white rounded-full disabled:bg-surface-light disabled:text-gray-500 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors shadow-[0_0_15px_rgba(124,77,255,0.3)] disabled:shadow-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
           >
             <Send className="w-5 h-5" />
           </button>
