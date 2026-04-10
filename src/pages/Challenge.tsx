@@ -206,7 +206,7 @@ export default function Challenge() {
           <div className="bg-surface border border-white/10 w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-8 animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-heading font-bold text-white">Choose your starting item</h3>
-              <button onClick={() => setShowStartModal(false)} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">✕</button>
+              <button onClick={() => setShowStartModal(false)} aria-label="Close" className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none">✕</button>
             </div>
             
             {myItems.length === 0 ? (
