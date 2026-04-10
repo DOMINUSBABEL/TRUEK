@@ -1,0 +1,3 @@
+## 2024-03-24 - Firestore onSnapshot N+1 Queries
+**Learning:** Real-time listeners like `onSnapshot` that map over `snapshot.docs` and perform network requests (like fetching related user data) will trigger an N+1 query problem *on every single update*. Even if only one document changes, `snapshot.docs` contains all documents, causing redundant fetches for unchanged data.
+**Action:** When enriching documents inside `onSnapshot`, use a local cache (e.g., `useRef`) to store already fetched relationships, and replace slow `getDocs(query)` lookups with direct `getDoc(doc)` lookups when the ID is known.
