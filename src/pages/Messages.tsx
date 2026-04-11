@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState, useRef } from 'react';
+import { collection, query, where, getDoc, doc, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -12,6 +12,9 @@ export default function Messages() {
   const navigate = useNavigate();
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Cache to prevent N+1 queries when snapshot updates
+  const userCache = useRef<Record<string, any>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -27,12 +30,17 @@ export default function Messages() {
         const chatData = chatDoc.data();
         const otherUserId = chatData.participants.find((id: string) => id !== user.uid);
         
-        // Fetch other user's details
+        // Fetch other user's details with caching and direct doc lookup
         let otherUser = { displayName: 'Usuario Desconocido', photoURL: '' };
         if (otherUserId) {
-          const userDocs = await getDocs(query(collection(db, 'users'), where('uid', '==', otherUserId)));
-          if (!userDocs.empty) {
-            otherUser = userDocs.docs[0].data() as any;
+          if (userCache.current[otherUserId]) {
+            otherUser = userCache.current[otherUserId];
+          } else {
+            const userDoc = await getDoc(doc(db, 'users', otherUserId));
+            if (userDoc.exists()) {
+              otherUser = userDoc.data() as any;
+              userCache.current[otherUserId] = otherUser;
+            }
           }
         }
 
