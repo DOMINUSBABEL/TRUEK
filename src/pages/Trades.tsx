@@ -111,12 +111,20 @@ export default function Trades() {
       await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
       // Reject other pending trades for these items
-      const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
+      // Optimized: Fetch only trades involving the traded items instead of all global pending trades
+      const itemsToReject = [trade.targetItemId, trade.offeredItemId];
+      const q = query(
+        collection(db, 'trades'),
+        or(
+          where('targetItemId', 'in', itemsToReject),
+          where('offeredItemId', 'in', itemsToReject)
+        )
+      );
       const snapshot = await getDocs(q);
       for (const tDoc of snapshot.docs) {
         const tData = tDoc.data();
-        if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
-          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
+        if (tData.id !== trade.id && tData.status === 'pending') {
+          await updateDoc(doc(db, 'trades', tDoc.id), { status: 'rejected' });
         }
       }
 
