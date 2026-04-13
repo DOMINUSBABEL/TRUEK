@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -25,17 +25,43 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+      // Bolt Optimization: Replace N+1 queries with chunked batched fetches
+      // Expected impact: Reduces database reads from O(N) to O(N/30), significantly improving load times for users with many trades.
+      const itemIdsToFetch = new Set<string>();
+      snapshot.docs.forEach(tradeDoc => {
         const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
+        if (data.targetItemId) itemIdsToFetch.add(data.targetItemId);
+        if (data.offeredItemId) itemIdsToFetch.add(data.offeredItemId);
+      });
+
+      const uniqueItemIds = Array.from(itemIdsToFetch);
+      const itemsCache: Record<string, any> = {};
+
+      if (uniqueItemIds.length > 0) {
+        const chunks = [];
+        for (let i = 0; i < uniqueItemIds.length; i += 30) {
+          chunks.push(uniqueItemIds.slice(i, i + 30));
+        }
+
+        const itemsRef = collection(db, 'items');
+        await Promise.all(chunks.map(async (chunk) => {
+          const itemsQuery = query(itemsRef, where(documentId(), 'in', chunk));
+          const itemsSnapshot = await getDocs(itemsQuery);
+          itemsSnapshot.docs.forEach(doc => {
+            itemsCache[doc.id] = doc.data();
+          });
+        }));
+      }
+
+      const tradesWithDetails = snapshot.docs.map((tradeDoc) => {
+        const data = tradeDoc.data();
         return {
           id: tradeDoc.id,
           ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
+          targetItem: itemsCache[data.targetItemId] || null,
+          offeredItem: itemsCache[data.offeredItemId] || null
         };
-      }));
+      });
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
@@ -145,16 +171,20 @@ export default function Trades() {
 
   if (!user) return null;
 
-  const filteredTrades = trades.filter(trade => {
-    const query = searchQuery.toLowerCase();
-    const isMyOffer = trade.offererId === user.uid;
-    const myItemTitle = (isMyOffer ? trade.offeredItem?.title : trade.targetItem?.title) || '';
-    const theirItemTitle = (isMyOffer ? trade.targetItem?.title : trade.offeredItem?.title) || '';
-    
-    return myItemTitle.toLowerCase().includes(query) || 
-           theirItemTitle.toLowerCase().includes(query) ||
-           trade.status.toLowerCase().includes(query);
-  });
+  // Bolt Optimization: Memoize the filtered trades list
+  // Expected impact: Prevents recalculation of the trade filtering loop on every render (e.g., when other state changes), reducing main thread blocking.
+  const filteredTrades = useMemo(() => {
+    return trades.filter(trade => {
+      const query = searchQuery.toLowerCase();
+      const isMyOffer = trade.offererId === user.uid;
+      const myItemTitle = (isMyOffer ? trade.offeredItem?.title : trade.targetItem?.title) || '';
+      const theirItemTitle = (isMyOffer ? trade.targetItem?.title : trade.offeredItem?.title) || '';
+
+      return myItemTitle.toLowerCase().includes(query) ||
+             theirItemTitle.toLowerCase().includes(query) ||
+             trade.status.toLowerCase().includes(query);
+    });
+  }, [trades, searchQuery, user.uid]);
 
   return (
     <div className="p-6 pb-32 bg-neutral min-h-screen">
