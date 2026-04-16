@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle, Star } from 'lucide-react';
@@ -39,17 +39,59 @@ export default function ItemDetail() {
             const q = query(collection(db, 'trades'), where('targetItemId', '==', id), where('status', '==', 'pending'));
             const snapshot = await getDocs(q);
             
-            const offers = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
-              const tradeData = tradeDoc.data();
-              const offeredItemDoc = await getDoc(doc(db, 'items', tradeData.offeredItemId));
-              const offererDoc = await getDoc(doc(db, 'users', tradeData.offererId));
-              return {
-                id: tradeDoc.id,
-                ...tradeData,
-                offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null,
-                offerer: offererDoc.exists() ? offererDoc.data() : null
-              };
+            const rawOffers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+
+            // ⚡ Bolt: Optimize N+1 query by batching item and user fetches
+            const itemIdsSet = new Set<string>();
+            const userIdsSet = new Set<string>();
+
+            rawOffers.forEach(trade => {
+              if (trade.offeredItemId) itemIdsSet.add(trade.offeredItemId);
+              if (trade.offererId) userIdsSet.add(trade.offererId);
+            });
+
+            const itemIds = Array.from(itemIdsSet);
+            const userIds = Array.from(userIdsSet);
+
+            const itemsMap: Record<string, any> = {};
+            const usersMap: Record<string, any> = {};
+
+            const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+              const result = [];
+              for (let i = 0; i < arr.length; i += size) {
+                result.push(arr.slice(i, i + size));
+              }
+              return result;
+            };
+
+            const itemChunks = chunkArray(itemIds, 30);
+            const userChunks = chunkArray(userIds, 30);
+
+            await Promise.all([
+              ...itemChunks.map(async (chunk) => {
+                if (chunk.length === 0) return;
+                const itemsQuery = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+                const itemsSnapshot = await getDocs(itemsQuery);
+                itemsSnapshot.forEach(doc => {
+                  itemsMap[doc.id] = doc.data();
+                });
+              }),
+              ...userChunks.map(async (chunk) => {
+                if (chunk.length === 0) return;
+                const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', chunk));
+                const usersSnapshot = await getDocs(usersQuery);
+                usersSnapshot.forEach(doc => {
+                  usersMap[doc.id] = doc.data();
+                });
+              })
+            ]);
+
+            const offers = rawOffers.map(trade => ({
+              ...trade,
+              offeredItem: itemsMap[trade.offeredItemId] || null,
+              offerer: usersMap[trade.offererId] || null
             }));
+
             setAuctionOffers(offers);
           }
         }
