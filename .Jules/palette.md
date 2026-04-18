@@ -1,3 +1,6 @@
 ## 2025-03-09 - Accessibility of Icon-Only Buttons
 **Learning:** This application heavily utilizes custom icon-only buttons (using `lucide-react`) across key views (e.g., layout navigation, adding an item, item details). By default, these buttons lacked proper ARIA labels and keyboard focus states (`focus-visible`), which makes the experience poor for screen reader users and keyboard navigators.
 **Action:** When working on future components or refining existing ones in this design system, always ensure that any icon-only button is accompanied by an `aria-label` (localized in Spanish per conventions) and explicitly receives focus states (`focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none`).
+## 2025-04-18 - Toggle Switch Accessibility
+**Learning:** Custom Tailwind toggle switches built using the `.sr-only peer` pattern often lack proper labeling and focus indicators if disjointed from the descriptive text. In this project, complex toggles like "Barter Auction" separate the label from the visual toggle.
+**Action:** Always add `peer-focus:ring-2 peer-focus:ring-primary` to the visual toggle div and explicitly link disjointed text using `<label htmlFor="id">` to improve both screen reader support and the clickable area for users.
