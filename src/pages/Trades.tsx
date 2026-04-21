@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -25,17 +25,42 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+      // ⚡ Bolt: Fixed N+1 query problem by batching item document fetches.
+      // Expected impact: Drastically reduces Firestore reads (from 2 * N to roughly 1 + N/30 reads) and improves loading speed significantly.
+
+      const tradeDocs = snapshot.docs;
+      const itemIdsToFetch = new Set<string>();
+
+      tradeDocs.forEach(doc => {
+        const data = doc.data();
+        if (data.targetItemId) itemIdsToFetch.add(data.targetItemId);
+        if (data.offeredItemId) itemIdsToFetch.add(data.offeredItemId);
+      });
+
+      const uniqueItemIds = Array.from(itemIdsToFetch);
+      const itemsMap: Record<string, any> = {};
+
+      // Firestore limits 'in' queries to 30 elements
+      for (let i = 0; i < uniqueItemIds.length; i += 30) {
+        const chunk = uniqueItemIds.slice(i, i + 30);
+        if (chunk.length > 0) {
+          const itemsQuery = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+          const itemsSnapshot = await getDocs(itemsQuery);
+          itemsSnapshot.forEach(itemDoc => {
+            itemsMap[itemDoc.id] = itemDoc.data();
+          });
+        }
+      }
+
+      const tradesWithDetails = tradeDocs.map((tradeDoc) => {
         const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
         return {
           id: tradeDoc.id,
           ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
+          targetItem: itemsMap[data.targetItemId] || null,
+          offeredItem: itemsMap[data.offeredItemId] || null
         };
-      }));
+      });
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
