@@ -124,8 +124,9 @@ export default function AddItem() {
 
         <div className="space-y-5">
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">What are you offering?</label>
+            <label htmlFor="item-title" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">What are you offering?</label>
             <input
+              id="item-title"
               type="text"
               required
               placeholder="e.g. Fender Electric Guitar"
@@ -136,8 +137,9 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Description</label>
+            <label htmlFor="item-description" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Description</label>
             <textarea
+              id="item-description"
               required
               rows={3}
               placeholder="Details, condition, etc."
@@ -149,8 +151,9 @@ export default function AddItem() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Condition</label>
+              <label htmlFor="item-condition" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Condition</label>
               <select
+                id="item-condition"
                 className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none"
                 value={formData.condition}
                 onChange={e => setFormData({...formData, condition: e.target.value})}
@@ -162,8 +165,9 @@ export default function AddItem() {
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Category</label>
+              <label htmlFor="item-category" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Category</label>
               <select
+                id="item-category"
                 className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none"
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value})}
@@ -179,8 +183,9 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">City</label>
+            <label htmlFor="item-location" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">City</label>
             <input
+              id="item-location"
               type="text"
               placeholder="e.g. Medellín"
               className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"
@@ -190,8 +195,9 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Looking for</label>
+            <label htmlFor="item-looking-for" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Looking for</label>
             <input
+              id="item-looking-for"
               type="text"
               placeholder="e.g. Gaming console, bike..."
               className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"
@@ -202,17 +208,19 @@ export default function AddItem() {
 
           <div className="flex items-center justify-between p-5 bg-tertiary/10 rounded-[2rem] border border-tertiary/20">
             <div>
-              <h4 className="font-heading font-bold text-tertiary">Barter Auction</h4>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-tertiary/70 mt-1">Receive multiple offers</p>
+              <label htmlFor="item-auction" className="font-heading font-bold text-tertiary block cursor-pointer">Barter Auction</label>
+              <p id="item-auction-desc" className="text-[10px] font-bold tracking-widest uppercase text-tertiary/70 mt-1">Receive multiple offers</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label htmlFor="item-auction" className="relative inline-flex items-center cursor-pointer">
               <input 
+                id="item-auction"
                 type="checkbox" 
                 className="sr-only peer"
                 checked={formData.isAuction}
                 onChange={e => setFormData({...formData, isAuction: e.target.checked})}
+                aria-describedby="item-auction-desc"
               />
-              <div className="w-11 h-6 bg-surface border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary"></div>
+              <div className="w-11 h-6 bg-surface border border-white/10 peer-focus:ring-2 peer-focus:ring-primary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary"></div>
             </label>
           </div>
         </div>
