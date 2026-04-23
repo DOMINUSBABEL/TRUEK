@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -25,17 +25,39 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+      // Extract all unique item IDs from the trades
+      const itemIds = new Set<string>();
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.targetItemId) itemIds.add(data.targetItemId);
+        if (data.offeredItemId) itemIds.add(data.offeredItemId);
+      });
+
+      // Fetch items in batches (Firestore 'in' query supports max 30 elements)
+      const uniqueItemIds = Array.from(itemIds);
+      const itemCache: Record<string, any> = {};
+
+      if (uniqueItemIds.length > 0) {
+        for (let i = 0; i < uniqueItemIds.length; i += 30) {
+          const batch = uniqueItemIds.slice(i, i + 30);
+          const itemsQuery = query(collection(db, 'items'), where(documentId(), 'in', batch));
+          const itemsSnapshot = await getDocs(itemsQuery);
+          itemsSnapshot.docs.forEach(itemDoc => {
+            itemCache[itemDoc.id] = itemDoc.data();
+          });
+        }
+      }
+
+      // Map trades using the cached item data
+      const tradesWithDetails = snapshot.docs.map((tradeDoc) => {
         const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
         return {
           id: tradeDoc.id,
           ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
+          targetItem: itemCache[data.targetItemId] || null,
+          offeredItem: itemCache[data.offeredItemId] || null
         };
-      }));
+      });
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
