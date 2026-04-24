@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Trophy, TrendingUp, Medal, ArrowRight, PlusCircle } from 'lucide-react';
@@ -40,14 +40,30 @@ export default function Challenge() {
             const challengeData = challengeSnap.docs[0].data();
             setActiveChallenge({ id: challengeSnap.docs[0].id, ...challengeData });
             
-            // Fetch history items
-            const historyItems = await Promise.all(
-              challengeData.history.map(async (itemId: string) => {
-                const itemDoc = await getDoc(doc(db, 'items', itemId));
-                return itemDoc.exists() ? { id: itemDoc.id, ...itemDoc.data() } : null;
-              })
-            );
-            setChallengeHistory(historyItems.filter(Boolean));
+            // Fetch history items - Optimization: Batch fetch items to avoid N+1 query problem
+            const historyItemIds = challengeData.history || [];
+            if (historyItemIds.length > 0) {
+              const itemDocsRecord: Record<string, any> = {};
+              // Firestore limits 'in' queries to 30 elements
+              const chunkSize = 30;
+              for (let i = 0; i < historyItemIds.length; i += chunkSize) {
+                const chunk = historyItemIds.slice(i, i + chunkSize);
+                const itemsQuery = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+                const itemsSnap = await getDocs(itemsQuery);
+                itemsSnap.docs.forEach(docSnap => {
+                  itemDocsRecord[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
+                });
+              }
+
+              // Reconstruct in original order
+              const historyItems = historyItemIds
+                .map((id: string) => itemDocsRecord[id])
+                .filter(Boolean);
+
+              setChallengeHistory(historyItems);
+            } else {
+              setChallengeHistory([]);
+            }
           }
         }
       } catch (error) {
