@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle, Star } from 'lucide-react';
@@ -39,17 +39,51 @@ export default function ItemDetail() {
             const q = query(collection(db, 'trades'), where('targetItemId', '==', id), where('status', '==', 'pending'));
             const snapshot = await getDocs(q);
             
-            const offers = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
-              const tradeData = tradeDoc.data();
-              const offeredItemDoc = await getDoc(doc(db, 'items', tradeData.offeredItemId));
-              const offererDoc = await getDoc(doc(db, 'users', tradeData.offererId));
-              return {
-                id: tradeDoc.id,
-                ...tradeData,
-                offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null,
-                offerer: offererDoc.exists() ? offererDoc.data() : null
-              };
+            const tradesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+            // Collect all unique item and user IDs
+            const itemIds = new Set<string>();
+            const userIds = new Set<string>();
+            tradesData.forEach(trade => {
+              if (trade.offeredItemId) itemIds.add(trade.offeredItemId);
+              if (trade.offererId) userIds.add(trade.offererId);
+            });
+
+            const itemsMap: Record<string, any> = {};
+            const usersMap: Record<string, any> = {};
+
+            // Fetch all items in batches of 30
+            const itemIdsArray = Array.from(itemIds);
+            for (let i = 0; i < itemIdsArray.length; i += 30) {
+              const chunk = itemIdsArray.slice(i, i + 30);
+              if (chunk.length > 0) {
+                const itemsQ = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+                const itemsSnap = await getDocs(itemsQ);
+                itemsSnap.forEach(doc => {
+                  itemsMap[doc.id] = doc.data();
+                });
+              }
+            }
+
+            // Fetch all users in batches of 30
+            const userIdsArray = Array.from(userIds);
+            for (let i = 0; i < userIdsArray.length; i += 30) {
+              const chunk = userIdsArray.slice(i, i + 30);
+              if (chunk.length > 0) {
+                const usersQ = query(collection(db, 'users'), where(documentId(), 'in', chunk));
+                const usersSnap = await getDocs(usersQ);
+                usersSnap.forEach(doc => {
+                  usersMap[doc.id] = doc.data();
+                });
+              }
+            }
+
+            const offers = tradesData.map(trade => ({
+              ...trade,
+              offeredItem: itemsMap[trade.offeredItemId] || null,
+              offerer: usersMap[trade.offererId] || null
             }));
+
             setAuctionOffers(offers);
           }
         }
