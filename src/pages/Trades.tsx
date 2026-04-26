@@ -25,16 +25,35 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
-        const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
-        return {
-          id: tradeDoc.id,
-          ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
-        };
+      // Extract all unique item IDs from trades
+      const itemIds = new Set<string>();
+      const tradesData = snapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        if (data.targetItemId) itemIds.add(data.targetItemId);
+        if (data.offeredItemId) itemIds.add(data.offeredItemId);
+        return { id: doc.id, ...data };
+      });
+
+      // Fetch all items in parallel (O(1) lookups instead of N+1 cascade)
+      // Note: Ideally use a where('id', 'in', [...itemIds]) query if there are many items,
+      // but doc lookups are fast and this is much better than nested sequential awaits inside a map.
+      const itemsMap: Record<string, any> = {};
+
+      if (itemIds.size > 0) {
+        const itemDocs = await Promise.all(
+          Array.from(itemIds).map(id => getDoc(doc(db, 'items', id)))
+        );
+        itemDocs.forEach(doc => {
+          if (doc.exists()) {
+            itemsMap[doc.id] = doc.data();
+          }
+        });
+      }
+
+      const tradesWithDetails = tradesData.map((trade: any) => ({
+        ...trade,
+        targetItem: itemsMap[trade.targetItemId] || null,
+        offeredItem: itemsMap[trade.offeredItemId] || null
       }));
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));

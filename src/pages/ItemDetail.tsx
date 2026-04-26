@@ -39,16 +39,43 @@ export default function ItemDetail() {
             const q = query(collection(db, 'trades'), where('targetItemId', '==', id), where('status', '==', 'pending'));
             const snapshot = await getDocs(q);
             
-            const offers = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
-              const tradeData = tradeDoc.data();
-              const offeredItemDoc = await getDoc(doc(db, 'items', tradeData.offeredItemId));
-              const offererDoc = await getDoc(doc(db, 'users', tradeData.offererId));
-              return {
-                id: tradeDoc.id,
-                ...tradeData,
-                offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null,
-                offerer: offererDoc.exists() ? offererDoc.data() : null
-              };
+            // Extract all unique IDs to fetch in parallel without cascading queries
+            const itemIds = new Set<string>();
+            const userIds = new Set<string>();
+            const tradesData = snapshot.docs.map(doc => {
+              const data = doc.data() as any;
+              if (data.offeredItemId) itemIds.add(data.offeredItemId);
+              if (data.offererId) userIds.add(data.offererId);
+              return { id: doc.id, ...data };
+            });
+
+            // Fetch referenced items and users in parallel O(1) lookups
+            const itemsMap: Record<string, any> = {};
+            const usersMap: Record<string, any> = {};
+
+            const fetchPromises: Promise<void>[] = [];
+
+            if (itemIds.size > 0) {
+              fetchPromises.push(
+                Promise.all(Array.from(itemIds).map(id => getDoc(doc(db, 'items', id)))).then(docs => {
+                  docs.forEach(doc => { if (doc.exists()) itemsMap[doc.id] = doc.data(); });
+                })
+              );
+            }
+            if (userIds.size > 0) {
+              fetchPromises.push(
+                Promise.all(Array.from(userIds).map(id => getDoc(doc(db, 'users', id)))).then(docs => {
+                  docs.forEach(doc => { if (doc.exists()) usersMap[doc.id] = doc.data(); });
+                })
+              );
+            }
+
+            await Promise.all(fetchPromises);
+
+            const offers = tradesData.map((trade: any) => ({
+              ...trade,
+              offeredItem: itemsMap[trade.offeredItemId] || null,
+              offerer: usersMap[trade.offererId] || null
             }));
             setAuctionOffers(offers);
           }
