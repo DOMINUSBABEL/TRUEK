@@ -1,0 +1,3 @@
+## 2024-05-24 - Custom Toggle Accessibility
+**Learning:** Custom Tailwind toggle switches implemented with the `.sr-only peer` pattern often lack visual focus indicators for keyboard users, making them inaccessible. Furthermore, any disjointed descriptive text must be explicitly linked using `aria-describedby` on the hidden input.
+**Action:** When creating or modifying `.sr-only peer` toggles, ensure the hidden input has an `id`, the visual element uses `peer-focus:ring-2 peer-focus:ring-primary`, and the wrapper is a `<label htmlFor="id">`. Link extra text with `aria-describedby` pointing to the text element's `id`.
