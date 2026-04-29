@@ -1,3 +1,7 @@
 ## 2024-05-24 - [Firestore onSnapshot N+1 Optimization]
 **Learning:** In React components listening to Firestore `onSnapshot` queries with related entity joins (e.g., chats with participant IDs), a state change or snapshot update triggers refetching of all related entities in a map/promise array, causing severe N+1 query proliferation and unnecessary database reads.
 **Action:** Use a `useRef` as a local dictionary to cache related entity documents (like users) across snapshot updates. Also, swap O(N) queries (`getDocs(query(collection, where('uid', '==', id)))`) for O(1) document lookups (`getDoc(doc(db, 'users', id))`) if the UID acts as the document ID.
+
+## 2025-04-29 - [Firestore fetch N+1 Query Optimization]
+**Learning:** When fetching collections of documents (e.g., trades) that reference other related documents (e.g., items), iterating over the collection and performing `getDoc` operations per referenced document results in N+1 queries. If multiple trades reference the same items, this causes redundant database reads and increases latency.
+**Action:** To optimize, extract all distinct reference IDs into a `Set`. Fetch all unique documents concurrently using `Promise.all` and store them in a local cache (e.g., `Record<string, any>`). Finally, map the original collection over the cached dictionary for $O(1)$ lookups, reducing network requests and speeding up processing.

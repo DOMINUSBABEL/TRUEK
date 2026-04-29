@@ -25,16 +25,32 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+      // ⚡ Bolt Performance Optimization:
+      // Prevent N+1 query problem by extracting distinct item IDs and fetching them concurrently.
+      // This reduces database reads when multiple trades reference the same item.
+      const itemIds = new Set<string>();
+      const tradesData = snapshot.docs.map(tradeDoc => {
         const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
-        return {
-          id: tradeDoc.id,
-          ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
-        };
+        if (data.targetItemId) itemIds.add(data.targetItemId);
+        if (data.offeredItemId) itemIds.add(data.offeredItemId);
+        return { id: tradeDoc.id, ...data };
+      });
+
+      // Fetch all unique items concurrently
+      const itemsCache: Record<string, any> = {};
+      const itemPromises = Array.from(itemIds).map(async (itemId) => {
+        const itemDoc = await getDoc(doc(db, 'items', itemId));
+        if (itemDoc.exists()) {
+          itemsCache[itemId] = itemDoc.data();
+        }
+      });
+      await Promise.all(itemPromises);
+
+      // Map trades with cached items (O(1) lookup)
+      const tradesWithDetails = tradesData.map(trade => ({
+        ...trade,
+        targetItem: (trade as any).targetItemId ? itemsCache[(trade as any).targetItemId] : null,
+        offeredItem: (trade as any).offeredItemId ? itemsCache[(trade as any).offeredItemId] : null
       }));
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
