@@ -1,3 +1,7 @@
 ## 2025-03-09 - Accessibility of Icon-Only Buttons
 **Learning:** This application heavily utilizes custom icon-only buttons (using `lucide-react`) across key views (e.g., layout navigation, adding an item, item details). By default, these buttons lacked proper ARIA labels and keyboard focus states (`focus-visible`), which makes the experience poor for screen reader users and keyboard navigators.
 **Action:** When working on future components or refining existing ones in this design system, always ensure that any icon-only button is accompanied by an `aria-label` (localized in Spanish per conventions) and explicitly receives focus states (`focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none`).
+
+## 2025-03-09 - Accessibility of Custom Tailwind Toggle Switches
+**Learning:** The application uses custom UI components like the "Barter Auction" toggle switch, which relies on a hidden input with the `.sr-only peer` Tailwind pattern. Without explicit IDs linked to `<label>` tags and focus indicator styles, these custom toggles are inaccessible to keyboard users and screen readers. Furthermore, Playwright's `get_by_label` struggles to focus these hidden inputs when verifying UI states.
+**Action:** Always link visual UI wrappers to their corresponding form inputs using `htmlFor` and `id`. Add `peer-focus-visible:ring` to the visual element for keyboard focus indication. When writing Playwright tests for such components, prefer `page.locator('#id')` over `get_by_label()` for reliable focus interaction.
