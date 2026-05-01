@@ -25,17 +25,38 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+      // OPTIMIZATION: Extract distinct item IDs to prevent N+1 query problem
+      // This reduces Firestore reads by fetching each unique item only once
+      // Expected impact: O(N) -> O(1) local lookups, significantly reducing latency and read costs
+      const itemIds = new Set<string>();
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.targetItemId) itemIds.add(data.targetItemId);
+        if (data.offeredItemId) itemIds.add(data.offeredItemId);
+      });
+
+      // Fetch all unique items concurrently
+      const itemDocs = await Promise.all(
+        Array.from(itemIds).map((id) => getDoc(doc(db, 'items', id)))
+      );
+
+      // Create a local dictionary for O(1) lookups
+      const itemDict: Record<string, any> = {};
+      itemDocs.forEach((docSnap) => {
+        if (docSnap.exists()) {
+          itemDict[docSnap.id] = docSnap.data();
+        }
+      });
+
+      const tradesWithDetails = snapshot.docs.map((tradeDoc) => {
         const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
         return {
           id: tradeDoc.id,
           ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
+          targetItem: itemDict[data.targetItemId] || null,
+          offeredItem: itemDict[data.offeredItemId] || null
         };
-      }));
+      });
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
