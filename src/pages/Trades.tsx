@@ -25,17 +25,36 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+      // Extract unique item IDs to avoid N+1 queries
+      const itemIds = new Set<string>();
+      snapshot.docs.forEach((tradeDoc) => {
         const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
+        if (data.targetItemId) itemIds.add(data.targetItemId);
+        if (data.offeredItemId) itemIds.add(data.offeredItemId);
+      });
+
+      // Fetch all unique items concurrently
+      const itemDocs = await Promise.all(
+        Array.from(itemIds).map(id => getDoc(doc(db, 'items', id)))
+      );
+
+      // Create a dictionary for O(1) lookup
+      const itemCache: Record<string, any> = {};
+      itemDocs.forEach(itemDoc => {
+        if (itemDoc.exists()) {
+          itemCache[itemDoc.id] = itemDoc.data();
+        }
+      });
+
+      const tradesWithDetails = snapshot.docs.map((tradeDoc) => {
+        const data = tradeDoc.data();
         return {
           id: tradeDoc.id,
           ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
+          targetItem: itemCache[data.targetItemId] || null,
+          offeredItem: itemCache[data.offeredItemId] || null
         };
-      }));
+      });
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
