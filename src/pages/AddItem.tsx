@@ -201,18 +201,20 @@ export default function AddItem() {
           </div>
 
           <div className="flex items-center justify-between p-5 bg-tertiary/10 rounded-[2rem] border border-tertiary/20">
-            <div>
+            <div id="auction-description">
               <h4 className="font-heading font-bold text-tertiary">Barter Auction</h4>
               <p className="text-[10px] font-bold tracking-widest uppercase text-tertiary/70 mt-1">Receive multiple offers</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label htmlFor="isAuction" className="relative inline-flex items-center cursor-pointer">
               <input 
+                id="isAuction"
                 type="checkbox" 
                 className="sr-only peer"
+                aria-describedby="auction-description"
                 checked={formData.isAuction}
                 onChange={e => setFormData({...formData, isAuction: e.target.checked})}
               />
-              <div className="w-11 h-6 bg-surface border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary"></div>
+              <div className="w-11 h-6 bg-surface border border-white/10 rounded-full peer peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:outline-none peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary"></div>
             </label>
           </div>
         </div>
