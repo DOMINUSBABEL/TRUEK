@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Home, PlusSquare, MessageCircle, User, Trophy, Bell } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
+
+// Simple fallback component for Suspense inside Layout
+const PageLoader = () => (
+  <div className="flex justify-center items-center h-[50vh]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+);
 
 export default function Layout() {
   const { user } = useAuth();
@@ -49,7 +56,9 @@ export default function Layout() {
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full pb-28">
-        <Outlet />
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {user && (
