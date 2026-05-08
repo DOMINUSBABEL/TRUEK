@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -25,16 +25,41 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
-        const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
-        return {
-          id: tradeDoc.id,
-          ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
-        };
+      const itemIds = new Set<string>();
+      const tradesData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        if (data.targetItemId) itemIds.add(data.targetItemId);
+        if (data.offeredItemId) itemIds.add(data.offeredItemId);
+        return { id: doc.id, ...data };
+      });
+
+      const itemsLookup: Record<string, any> = {};
+      const uniqueItemIds = Array.from(itemIds);
+
+      // Firestore 'in' query has a limit of 30, chunking if necessary
+      const chunkArray = (arr: string[], size: number) => {
+        const chunks = [];
+        for (let i = 0; i < arr.length; i += size) {
+          chunks.push(arr.slice(i, i + size));
+        }
+        return chunks;
+      };
+
+      if (uniqueItemIds.length > 0) {
+        const chunks = chunkArray(uniqueItemIds, 30);
+        await Promise.all(chunks.map(async (chunk) => {
+          const itemsQuery = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+          const itemsSnapshot = await getDocs(itemsQuery);
+          itemsSnapshot.forEach(doc => {
+            itemsLookup[doc.id] = doc.data();
+          });
+        }));
+      }
+
+      const tradesWithDetails = tradesData.map((data: any) => ({
+        ...data,
+        targetItem: itemsLookup[data.targetItemId] || null,
+        offeredItem: itemsLookup[data.offeredItemId] || null
       }));
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
