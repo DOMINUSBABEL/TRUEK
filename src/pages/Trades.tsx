@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -103,12 +103,14 @@ export default function Trades() {
 
   const handleAccept = async (trade: any) => {
     try {
+      const batch = writeBatch(db);
+
       // Update trade status
-      await updateDoc(doc(db, 'trades', trade.id), { status: 'accepted' });
+      batch.update(doc(db, 'trades', trade.id), { status: 'accepted' });
       
       // Update items status
-      await updateDoc(doc(db, 'items', trade.targetItemId), { status: 'traded' });
-      await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
+      batch.update(doc(db, 'items', trade.targetItemId), { status: 'traded' });
+      batch.update(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
       // Reject other pending trades for these items
       const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
@@ -116,13 +118,17 @@ export default function Trades() {
       for (const tDoc of snapshot.docs) {
         const tData = tDoc.data();
         if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
-          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
+          batch.update(doc(db, 'trades', tData.id), { status: 'rejected' });
         }
       }
 
+      await batch.commit();
+
       // Update challenges
-      await updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId);
-      await updateChallengeIfActive(trade.offererId, trade.offeredItemId, trade.targetItemId);
+      await Promise.all([
+        updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId),
+        updateChallengeIfActive(trade.offererId, trade.offeredItemId, trade.targetItemId)
+      ]);
 
       toast.success('¡Trueque aceptado!');
       fetchTrades();
