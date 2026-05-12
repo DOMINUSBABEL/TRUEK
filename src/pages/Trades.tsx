@@ -222,8 +222,9 @@ export default function Trades() {
                     </span>
                     <button 
                       onClick={() => startChat(otherUserId)}
-                      className="p-2.5 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors border border-primary/20"
+                      className="p-2.5 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors border border-primary/20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                       title="Chat"
+                      aria-label="Chat"
                     >
                       <MessageCircle className="w-4 h-4" />
                     </button>
