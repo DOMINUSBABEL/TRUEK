@@ -27,8 +27,10 @@ export default function Trades() {
       
       const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
         const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
+        const [targetItemDoc, offeredItemDoc] = await Promise.all([
+          getDoc(doc(db, 'items', data.targetItemId)),
+          getDoc(doc(db, 'items', data.offeredItemId))
+        ]);
         return {
           id: tradeDoc.id,
           ...data,
