@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -25,16 +25,45 @@ export default function Trades() {
       );
       const snapshot = await getDocs(q);
       
-      const tradesWithDetails = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
-        const data = tradeDoc.data();
-        const targetItemDoc = await getDoc(doc(db, 'items', data.targetItemId));
-        const offeredItemDoc = await getDoc(doc(db, 'items', data.offeredItemId));
-        return {
-          id: tradeDoc.id,
-          ...data,
-          targetItem: targetItemDoc.exists() ? targetItemDoc.data() : null,
-          offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null
-        };
+      const tradesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // ⚡ Bolt: N+1 Query Optimization
+      // Extracted unique item IDs into a Set to prevent fetching the same item multiple times.
+      // Expected impact: Reduces network round-trips from O(2N) to O(1) batch requests.
+      const itemIds = new Set<string>();
+      tradesData.forEach((trade: any) => {
+        if (trade.targetItemId) itemIds.add(trade.targetItemId);
+        if (trade.offeredItemId) itemIds.add(trade.offeredItemId);
+      });
+
+      const uniqueItemIds = Array.from(itemIds);
+      const itemsMap: Record<string, any> = {};
+
+      if (uniqueItemIds.length > 0) {
+        const chunks = [];
+        // Chunk queries to respect Firestore's 30-element `in` clause limit
+        for (let i = 0; i < uniqueItemIds.length; i += 30) {
+          chunks.push(uniqueItemIds.slice(i, i + 30));
+        }
+
+        const itemPromises = chunks.map(chunk =>
+          getDocs(query(collection(db, 'items'), where(documentId(), 'in', chunk)))
+        );
+
+        const itemSnapshots = await Promise.all(itemPromises);
+
+        itemSnapshots.forEach(snap => {
+          snap.forEach(doc => {
+            itemsMap[doc.id] = doc.data();
+          });
+        });
+      }
+
+      // Reconstruct trades efficiently using O(1) memory lookups
+      const tradesWithDetails = tradesData.map((trade: any) => ({
+        ...trade,
+        targetItem: itemsMap[trade.targetItemId] || null,
+        offeredItem: itemsMap[trade.offeredItemId] || null
       }));
       
       setTrades(tradesWithDetails.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
