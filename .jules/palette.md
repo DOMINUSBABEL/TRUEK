@@ -1,0 +1,3 @@
+## 2025-02-23 - Custom Toggle Switch Accessibility Pattern
+**Learning:** Custom Tailwind toggle switches using the `.sr-only peer` pattern often lack proper keyboard focus states, disjointed label association, and explicit `htmlFor` ID mapping, making them invisible to keyboard users and screen readers.
+**Action:** When implementing custom toggle switches, always assign an explicit `id` to the hidden input, wrap it in a `<label htmlFor="id">`, use `aria-describedby` to link the toggle with its descriptive text, and apply `peer-focus-visible:ring-2 peer-focus-visible:ring-primary` to the visual indicator for keyboard navigation.
