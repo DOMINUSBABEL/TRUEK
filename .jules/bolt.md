@@ -1,3 +1,7 @@
 ## 2024-05-24 - [Firestore onSnapshot N+1 Optimization]
 **Learning:** In React components listening to Firestore `onSnapshot` queries with related entity joins (e.g., chats with participant IDs), a state change or snapshot update triggers refetching of all related entities in a map/promise array, causing severe N+1 query proliferation and unnecessary database reads.
 **Action:** Use a `useRef` as a local dictionary to cache related entity documents (like users) across snapshot updates. Also, swap O(N) queries (`getDocs(query(collection, where('uid', '==', id)))`) for O(1) document lookups (`getDoc(doc(db, 'users', id))`) if the UID acts as the document ID.
+
+## 2024-05-19 - Firestore N+1 Query Reduction with Array Chunking
+**Learning:** In Truekio, mapping through query results (like `trades`) and fetching related documents (`items`) sequentially inside a `Promise.all` with individual `getDoc` calls creates an N+1 query problem, creating O(N) network round-trips. When fixing this by extracting unique IDs and fetching in bulk, Firestore's `in` query limitation (max 30 elements) must be respected by chunking the unique IDs array.
+**Action:** Extract distinct entity IDs into a `Set`, chunk the unique IDs into arrays of max 30 elements, fetch chunks concurrently using `Promise.all` and `getDocs` with `where(documentId(), 'in', chunk)`, and map the results into a dictionary (`Map`) for O(1) state reconstruction to reduce N+1 latency to O(1) chunk latency.
