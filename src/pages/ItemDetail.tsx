@@ -21,6 +21,7 @@ export default function ItemDetail() {
   const [auctionOffers, setAuctionOffers] = useState<any[]>([]);
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
+  const [isNavigatingToChat, setIsNavigatingToChat] = useState(false);
 
   useEffect(() => {
     const fetchItemAndOwner = async () => {
@@ -313,33 +314,45 @@ export default function ItemDetail() {
                   toast.error('Debes iniciar sesión para chatear');
                   return;
                 }
-                const chatsRef = collection(db, 'chats');
-                const q = query(chatsRef, where('participants', 'array-contains', user.uid));
-                const snapshot = await getDocs(q);
                 
-                let existingChatId = null;
-                snapshot.forEach(doc => {
-                  const data = doc.data();
-                  if (data.participants.includes(item.ownerId)) {
-                    existingChatId = doc.id;
-                  }
-                });
+                setIsNavigatingToChat(true);
+                try {
+                  const chatsRef = collection(db, 'chats');
+                  const q = query(chatsRef, where('participants', 'array-contains', user.uid));
+                  const snapshot = await getDocs(q);
 
-                if (existingChatId) {
-                  navigate(`/chat/${existingChatId}`);
-                } else {
-                  const newChatRef = doc(collection(db, 'chats'));
-                  await setDoc(newChatRef, {
-                    id: newChatRef.id,
-                    participants: [user.uid, item.ownerId],
-                    updatedAt: new Date().toISOString()
+                  let existingChatId = null;
+                  snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.participants.includes(item.ownerId)) {
+                      existingChatId = doc.id;
+                    }
                   });
-                  navigate(`/chat/${newChatRef.id}`);
+
+                  if (existingChatId) {
+                    navigate(`/chat/${existingChatId}`);
+                  } else {
+                    const newChatRef = doc(collection(db, 'chats'));
+                    await setDoc(newChatRef, {
+                      id: newChatRef.id,
+                      participants: [user.uid, item.ownerId],
+                      updatedAt: new Date().toISOString()
+                    });
+                    navigate(`/chat/${newChatRef.id}`);
+                  }
+                } finally {
+                  setIsNavigatingToChat(false);
                 }
               }}
-              className="flex-1 bg-surface-light text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center border border-white/5"
+              disabled={isNavigatingToChat}
+              className="flex-1 bg-surface-light text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center border border-white/5 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Chatear
+              {isNavigatingToChat ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  <span className="sr-only">Cargando...</span>
+                </>
+              ) : 'Chatear'}
             </button>
             <button 
               onClick={handleOfferClick}
