@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle, Star } from 'lucide-react';
+import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle, Star, Loader2 } from 'lucide-react';
 import { formatDistanceToNow, differenceInHours, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -20,6 +20,7 @@ export default function ItemDetail() {
   const [selectedMyItem, setSelectedMyItem] = useState<string>('');
   const [auctionOffers, setAuctionOffers] = useState<any[]>([]);
   const [timeLeft, setTimeLeft] = useState<string>('');
+  const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
 
   useEffect(() => {
     const fetchItemAndOwner = async () => {
@@ -112,6 +113,7 @@ export default function ItemDetail() {
   const submitOffer = async () => {
     if (!selectedMyItem || !user || !item) return;
     
+    setIsSubmittingOffer(true);
     try {
       const tradeRef = doc(collection(db, 'trades'));
       await setDoc(tradeRef, {
@@ -128,6 +130,8 @@ export default function ItemDetail() {
     } catch (error) {
       console.error("Error submitting offer:", error);
       toast.error('Hubo un error al enviar la oferta');
+    } finally {
+      setIsSubmittingOffer(false);
     }
   };
 
@@ -406,10 +410,10 @@ export default function ItemDetail() {
               <div className="p-6 border-t border-white/5 bg-surface-light/50">
                 <button
                   onClick={submitOffer}
-                  disabled={!selectedMyItem}
-                  className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors shadow-[0_0_20px_rgba(124,77,255,0.3)]"
+                  disabled={!selectedMyItem || isSubmittingOffer}
+                  className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors shadow-[0_0_20px_rgba(124,77,255,0.3)] flex justify-center items-center"
                 >
-                  Enviar Oferta
+                  {isSubmittingOffer ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Enviar Oferta'}
                 </button>
               </div>
             )}
