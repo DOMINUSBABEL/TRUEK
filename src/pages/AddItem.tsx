@@ -223,7 +223,7 @@ export default function AddItem() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover transition-colors flex justify-center items-center mt-8"
+          className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover disabled:opacity-70 disabled:cursor-not-allowed transition-colors flex justify-center items-center mt-8 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Asset'}
         </button>
