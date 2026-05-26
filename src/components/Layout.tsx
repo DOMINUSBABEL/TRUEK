@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Home, PlusSquare, MessageCircle, User, Trophy, Bell } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,7 +49,14 @@ export default function Layout() {
       </header>
 
       <main className="flex-1 max-w-md mx-auto w-full pb-28">
-        <Outlet />
+        {/* ⚡ Bolt: Added Suspense boundary to prevent the layout from unmounting during lazy loads */}
+        <Suspense fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        }>
+          <Outlet />
+        </Suspense>
       </main>
 
       {user && (
