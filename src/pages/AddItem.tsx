@@ -202,17 +202,20 @@ export default function AddItem() {
 
           <div className="flex items-center justify-between p-5 bg-tertiary/10 rounded-[2rem] border border-tertiary/20">
             <div>
-              <h4 className="font-heading font-bold text-tertiary">Barter Auction</h4>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-tertiary/70 mt-1">Receive multiple offers</p>
+              <h4 id="auction-title" className="font-heading font-bold text-tertiary">Barter Auction</h4>
+              <p id="auction-desc" className="text-[10px] font-bold tracking-widest uppercase text-tertiary/70 mt-1">Receive multiple offers</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label htmlFor="isAuction" className="relative inline-flex items-center cursor-pointer">
               <input 
+                id="isAuction"
                 type="checkbox" 
                 className="sr-only peer"
                 checked={formData.isAuction}
                 onChange={e => setFormData({...formData, isAuction: e.target.checked})}
+                aria-labelledby="auction-title"
+                aria-describedby="auction-desc"
               />
-              <div className="w-11 h-6 bg-surface border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary"></div>
+              <div className="w-11 h-6 bg-surface border border-white/10 peer-focus:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary"></div>
             </label>
           </div>
         </div>
@@ -220,7 +223,7 @@ export default function AddItem() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover transition-colors flex justify-center items-center mt-8"
+          className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center mt-8"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Asset'}
         </button>
