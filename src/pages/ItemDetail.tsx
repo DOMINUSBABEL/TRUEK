@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle, Star, Loader2 } from 'lucide-react';
@@ -159,22 +159,28 @@ export default function ItemDetail() {
 
   const acceptOffer = async (tradeId: string, offererId: string, offeredItemId: string) => {
     try {
+      const batch = writeBatch(db);
+
       // Update accepted trade
-      await updateDoc(doc(db, 'trades', tradeId), { status: 'accepted' });
+      batch.update(doc(db, 'trades', tradeId), { status: 'accepted' });
       
       // Reject other trades
       const otherOffers = auctionOffers.filter(o => o.id !== tradeId);
       for (const offer of otherOffers) {
-        await updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' });
+        batch.update(doc(db, 'trades', offer.id), { status: 'rejected' });
       }
 
       // Update items status
-      await updateDoc(doc(db, 'items', item.id), { status: 'traded' });
-      await updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' });
+      batch.update(doc(db, 'items', item.id), { status: 'traded' });
+      batch.update(doc(db, 'items', offeredItemId), { status: 'traded' });
+
+      await batch.commit();
 
       // Update challenges
-      await updateChallengeIfActive(item.ownerId, item.id, offeredItemId);
-      await updateChallengeIfActive(offererId, offeredItemId, item.id);
+      await Promise.all([
+        updateChallengeIfActive(item.ownerId, item.id, offeredItemId),
+        updateChallengeIfActive(offererId, offeredItemId, item.id)
+      ]);
 
       toast.success('¡Oferta aceptada! Revisa tus mensajes para coordinar.');
       navigate('/trades');
