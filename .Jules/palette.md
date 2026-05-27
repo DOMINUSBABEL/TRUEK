@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2024-05-27 - AddItem Form Accessibility Improvements
+**Learning:** In Truekio, small textual labels above inputs (e.g., `<label className="block text-[10px]...">`) act as very small touch targets. Without explicit `htmlFor` and `id` linking, clicking the label text does not focus the input. Additionally, submit buttons with loading spinners lacked screen reader context when entering the loading state.
+**Action:** Always explicitly link `<label htmlFor="id">` to `<input id="id">` (or textarea/select) to increase the effective touch target size, especially for small text. Always include a `<span className="sr-only">Cargando...</span>` (localized) inside buttons when swapping text for a spinner during async operations.
