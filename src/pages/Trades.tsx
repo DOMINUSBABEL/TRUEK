@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
+import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,7 @@ export default function Trades() {
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [processingTrade, setProcessingTrade] = useState<string | null>(null);
 
   const fetchTrades = async () => {
     if (!user) return;
@@ -128,6 +129,7 @@ export default function Trades() {
   };
 
   const handleAccept = async (trade: any) => {
+    setProcessingTrade(trade.id);
     try {
       // Update trade status
       await updateDoc(doc(db, 'trades', trade.id), { status: 'accepted' });
@@ -155,10 +157,13 @@ export default function Trades() {
     } catch (error) {
       console.error("Error accepting trade:", error);
       toast.error('Error al aceptar el trueque');
+    } finally {
+      setProcessingTrade(null);
     }
   };
 
   const handleReject = async (tradeId: string) => {
+    setProcessingTrade(tradeId);
     try {
       await updateDoc(doc(db, 'trades', tradeId), { status: 'rejected' });
       toast.success('Trueque rechazado');
@@ -166,6 +171,8 @@ export default function Trades() {
     } catch (error) {
       console.error("Error rejecting trade:", error);
       toast.error('Error al rechazar el trueque');
+    } finally {
+      setProcessingTrade(null);
     }
   };
 
@@ -277,16 +284,26 @@ export default function Trades() {
                   <div className="flex space-x-3 mt-6 pt-5 border-t border-white/5">
                     <button 
                       onClick={() => handleReject(trade.id)}
-                      className="flex-1 py-3.5 bg-red-500/10 text-red-500 text-xs font-bold tracking-widest uppercase rounded-full hover:bg-red-500/20 transition-colors flex items-center justify-center border border-red-500/20"
+                      disabled={processingTrade === trade.id}
+                      className="flex-1 py-3.5 bg-red-500/10 text-red-500 text-xs font-bold tracking-widest uppercase rounded-full hover:bg-red-500/20 transition-colors flex items-center justify-center border border-red-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      <XCircle className="w-4 h-4 mr-2" />
+                      {processingTrade === trade.id ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span className="sr-only">Procesando...</span></>
+                      ) : (
+                        <XCircle className="w-4 h-4 mr-2" />
+                      )}
                       Reject
                     </button>
                     <button 
                       onClick={() => handleAccept(trade)}
-                      className="flex-1 py-3.5 bg-primary text-white text-xs font-bold tracking-widest uppercase rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center shadow-[0_0_15px_rgba(124,77,255,0.3)]"
+                      disabled={processingTrade === trade.id}
+                      className="flex-1 py-3.5 bg-primary text-white text-xs font-bold tracking-widest uppercase rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center shadow-[0_0_15px_rgba(124,77,255,0.3)] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none"
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                      {processingTrade === trade.id ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span className="sr-only">Procesando...</span></>
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
                       Accept
                     </button>
                   </div>

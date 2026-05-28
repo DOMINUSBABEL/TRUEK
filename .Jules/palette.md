@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2025-03-09 - Loading states for dual-action button groups
+**Learning:** Tracking loading state solely by an entity ID (e.g., `processingTrade === trade.id`) for dual-action buttons (Accept/Reject) causes both buttons to visually enter the loading state when one is clicked.
+**Action:** Track the specific action (e.g., `accept-${trade.id}`) to ensure only the clicked button shows a spinner.
