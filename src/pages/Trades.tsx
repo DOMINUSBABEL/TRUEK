@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, writeBatch, limit, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -129,22 +129,44 @@ export default function Trades() {
 
   const handleAccept = async (trade: any) => {
     try {
+      const batch = writeBatch(db);
+
       // Update trade status
-      await updateDoc(doc(db, 'trades', trade.id), { status: 'accepted' });
+      batch.update(doc(db, 'trades', trade.id), { status: 'accepted' });
       
       // Update items status
-      await updateDoc(doc(db, 'items', trade.targetItemId), { status: 'traded' });
-      await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
+      batch.update(doc(db, 'items', trade.targetItemId), { status: 'traded' });
+      batch.update(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
-      // Reject other pending trades for these items
-      const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
-      const snapshot = await getDocs(q);
-      for (const tDoc of snapshot.docs) {
-        const tData = tDoc.data();
-        if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
-          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
+      // OPTIMIZATION: Query only relevant pending trades instead of all pending trades
+      // Firebase requires composite filters to be applied safely.
+      // Alternatively, we can use two simpler queries to ensure we don't hit indexing/typing limits.
+      const q1 = query(
+        collection(db, 'trades'),
+        where('status', '==', 'pending'),
+        where('targetItemId', 'in', [trade.targetItemId, trade.offeredItemId])
+      );
+      const q2 = query(
+        collection(db, 'trades'),
+        where('status', '==', 'pending'),
+        where('offeredItemId', 'in', [trade.targetItemId, trade.offeredItemId])
+      );
+
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+      const seenIds = new Set<string>();
+
+      const processDoc = (tDoc: any) => {
+        if (tDoc.id !== trade.id && !seenIds.has(tDoc.id)) {
+          seenIds.add(tDoc.id);
+          batch.update(doc(db, 'trades', tDoc.id), { status: 'rejected' });
         }
-      }
+      };
+
+      snap1.docs.forEach(processDoc);
+      snap2.docs.forEach(processDoc);
+
+      // Commit the batch to execute atomic updates
+      await batch.commit();
 
       // Update challenges
       await updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId);
