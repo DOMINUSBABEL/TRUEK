@@ -124,8 +124,9 @@ export default function AddItem() {
 
         <div className="space-y-5">
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">What are you offering?</label>
+            <label htmlFor="item-title" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">What are you offering?</label>
             <input
+              id="item-title"
               type="text"
               required
               placeholder="e.g. Fender Electric Guitar"
@@ -136,8 +137,9 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Description</label>
+            <label htmlFor="item-description" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">Description</label>
             <textarea
+              id="item-description"
               required
               rows={3}
               placeholder="Details, condition, etc."
@@ -149,9 +151,10 @@ export default function AddItem() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Condition</label>
+              <label htmlFor="item-condition" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">Condition</label>
               <select
-                className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none"
+                id="item-condition"
+                className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none cursor-pointer"
                 value={formData.condition}
                 onChange={e => setFormData({...formData, condition: e.target.value})}
               >
@@ -162,9 +165,10 @@ export default function AddItem() {
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Category</label>
+              <label htmlFor="item-category" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">Category</label>
               <select
-                className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none"
+                id="item-category"
+                className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none cursor-pointer"
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value})}
               >
@@ -179,8 +183,9 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">City</label>
+            <label htmlFor="item-location" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">City</label>
             <input
+              id="item-location"
               type="text"
               placeholder="e.g. Medellín"
               className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"
@@ -190,8 +195,9 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Looking for</label>
+            <label htmlFor="item-looking-for" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">Looking for</label>
             <input
+              id="item-looking-for"
               type="text"
               placeholder="e.g. Gaming console, bike..."
               className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"

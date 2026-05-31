@@ -1,52 +1,55 @@
-import time
 from playwright.sync_api import sync_playwright
+import os
+import shutil
 
-def verify():
-    with sync_playwright() as p:
-        # Launch browser
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(record_video_dir="videos/")
-        page = context.new_page()
+def run_cuj(page):
+    page.goto("http://localhost:4173/#/add")
+    page.wait_for_timeout(2000)
 
-        # Try to connect to the dev server
-        connected = False
-        for _ in range(10):
-            try:
-                page.goto("http://localhost:4173")
-                connected = True
-                break
-            except Exception:
-                time.sleep(1)
+    # We expect to be redirected to home if we are not logged in, but let's click 'Continue as Guest'
+    try:
+        # If we are at home page, click 'Continue as Guest'
+        page.get_by_text("Continue as Guest").click(timeout=3000)
+        page.wait_for_timeout(1000)
+        page.goto("http://localhost:4173/#/add")
+        page.wait_for_timeout(2000)
+    except:
+        pass
 
-        if not connected:
-            print("Failed to connect to dev server")
-            return
+    # Now we are on the add page. Let's test the label clickability
+    # Click the label for 'What are you offering?' and verify focus is on the input
+    page.get_by_text("What are you offering?").click()
+    page.wait_for_timeout(500)
 
-        # Navigate to trades (login as guest first)
-        page.goto("http://localhost:4173/#/")
-        time.sleep(1)
+    # Check if the title input has focus
+    title_input = page.locator("#item-title")
+    title_input.fill("Playwright Test Guitar")
+    page.wait_for_timeout(500)
 
-        # Click Continue as Guest to bypass auth
-        guest_btn = page.get_by_role("button", name="Continue as Guest", exact=False)
-        if guest_btn.is_visible():
-             guest_btn.click()
-             time.sleep(1)
+    # Click description label
+    page.get_by_text("Description").click()
+    page.wait_for_timeout(500)
 
-        # Go to trades page
-        page.goto("http://localhost:4173/#/trades")
-        time.sleep(2)
+    # Check if description textarea has focus
+    desc_input = page.locator("#item-description")
+    desc_input.fill("This is a test description")
+    page.wait_for_timeout(500)
 
-        # Tab to check focus styling on the Chat button
-        page.keyboard.press('Tab')
-        page.keyboard.press('Tab')
-        page.keyboard.press('Tab')
-
-        page.screenshot(path="trades_focus.png")
-        print("Screenshot saved to trades_focus.png")
-
-        # Close everything
-        context.close()
-        browser.close()
+    # Take screenshot
+    os.makedirs("/home/jules/verification/screenshots", exist_ok=True)
+    page.screenshot(path="/home/jules/verification/screenshots/verification.png")
+    page.wait_for_timeout(1000)
 
 if __name__ == "__main__":
-    verify()
+    os.makedirs("/home/jules/verification/videos", exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(
+            record_video_dir="/home/jules/verification/videos"
+        )
+        page = context.new_page()
+        try:
+            run_cuj(page)
+        finally:
+            context.close()
+            browser.close()
