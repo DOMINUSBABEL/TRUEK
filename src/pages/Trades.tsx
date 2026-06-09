@@ -193,6 +193,7 @@ export default function Trades() {
         <input
           type="text"
           placeholder="Search by item title or status..."
+          aria-label="Search by item title or status"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-11 pr-4 py-3.5 bg-surface border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-sm"
@@ -219,7 +220,7 @@ export default function Trades() {
           {!searchQuery && (
             <button 
               onClick={() => navigate('/')}
-              className="bg-primary hover:bg-primary-hover text-white text-xs font-bold tracking-widest uppercase py-3.5 px-8 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(124,77,255,0.3)]"
+              className="bg-primary hover:bg-primary-hover text-white text-xs font-bold tracking-widest uppercase py-3.5 px-8 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(124,77,255,0.3)] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             >
               Explore Items
             </button>
@@ -277,14 +278,14 @@ export default function Trades() {
                   <div className="flex space-x-3 mt-6 pt-5 border-t border-white/5">
                     <button 
                       onClick={() => handleReject(trade.id)}
-                      className="flex-1 py-3.5 bg-red-500/10 text-red-500 text-xs font-bold tracking-widest uppercase rounded-full hover:bg-red-500/20 transition-colors flex items-center justify-center border border-red-500/20"
+                      className="flex-1 py-3.5 bg-red-500/10 text-red-500 text-xs font-bold tracking-widest uppercase rounded-full hover:bg-red-500/20 transition-colors flex items-center justify-center border border-red-500/20 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none"
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Reject
                     </button>
                     <button 
                       onClick={() => handleAccept(trade)}
-                      className="flex-1 py-3.5 bg-primary text-white text-xs font-bold tracking-widest uppercase rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center shadow-[0_0_15px_rgba(124,77,255,0.3)]"
+                      className="flex-1 py-3.5 bg-primary text-white text-xs font-bold tracking-widest uppercase rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center shadow-[0_0_15px_rgba(124,77,255,0.3)] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Accept

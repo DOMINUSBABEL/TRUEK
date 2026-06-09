@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2026-06-09 - Trades Page Keyboard Accessibility
+**Learning:** Reusable button components in custom UI lists often lack explicit keyboard focus states when not using a standardized design system, requiring explicit 'focus-visible' utility classes to ensure accessibility.
+**Action:** When working on lists of interactive elements (like trade actions or list items), manually verify and add 'focus-visible:ring-2' states to all interactive buttons.
