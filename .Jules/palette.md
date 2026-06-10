@@ -4,3 +4,7 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+
+## 2023-10-27 - Consistency in Localized ARIA Labels
+**Learning:** When adding `aria-label` attributes for accessibility, it's crucial to match the language of the surrounding UI. Initially, I added Spanish ARIA labels to English inputs/placeholders, which creates a confusing and inconsistent experience for screen reader users.
+**Action:** Always verify the language of the surrounding UI text (placeholders, labels, surrounding text) and ensure that any newly added `aria-label` attributes are localized in the same language.
