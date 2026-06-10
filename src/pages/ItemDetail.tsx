@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc, writeBatch, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle, Star, Loader2 } from 'lucide-react';
@@ -40,17 +40,59 @@ export default function ItemDetail() {
             const q = query(collection(db, 'trades'), where('targetItemId', '==', id), where('status', '==', 'pending'));
             const snapshot = await getDocs(q);
             
-            const offers = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+            // OPTIMIZATION: Prevent N+1 queries by extracting distinct user IDs and item IDs
+            const userIds = new Set<string>();
+            const itemIds = new Set<string>();
+
+            snapshot.docs.forEach(tradeDoc => {
+              const data = tradeDoc.data();
+              if (data.offererId) userIds.add(data.offererId);
+              if (data.offeredItemId) itemIds.add(data.offeredItemId);
+            });
+
+            const uniqueUserIds = Array.from(userIds);
+            const uniqueItemIds = Array.from(itemIds);
+
+            const usersDict: Record<string, any> = {};
+            const itemsDict: Record<string, any> = {};
+
+            const chunkSize = 30;
+
+            const userChunks = [];
+            for (let i = 0; i < uniqueUserIds.length; i += chunkSize) {
+              userChunks.push(uniqueUserIds.slice(i, i + chunkSize));
+            }
+
+            const itemChunks = [];
+            for (let i = 0; i < uniqueItemIds.length; i += chunkSize) {
+              itemChunks.push(uniqueItemIds.slice(i, i + chunkSize));
+            }
+
+            // OPTIMIZATION: Fetch all document chunks concurrently
+            await Promise.all([
+              ...userChunks.map(async (chunk) => {
+                if (chunk.length === 0) return;
+                const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', chunk));
+                const usersSnap = await getDocs(usersQuery);
+                usersSnap.docs.forEach(d => { usersDict[d.id] = d.data(); });
+              }),
+              ...itemChunks.map(async (chunk) => {
+                if (chunk.length === 0) return;
+                const itemsQuery = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+                const itemsSnap = await getDocs(itemsQuery);
+                itemsSnap.docs.forEach(d => { itemsDict[d.id] = d.data(); });
+              })
+            ]);
+
+            const offers = snapshot.docs.map(tradeDoc => {
               const tradeData = tradeDoc.data();
-              const offeredItemDoc = await getDoc(doc(db, 'items', tradeData.offeredItemId));
-              const offererDoc = await getDoc(doc(db, 'users', tradeData.offererId));
               return {
                 id: tradeDoc.id,
                 ...tradeData,
-                offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null,
-                offerer: offererDoc.exists() ? offererDoc.data() : null
+                offeredItem: itemsDict[tradeData.offeredItemId] || null,
+                offerer: usersDict[tradeData.offererId] || null
               };
-            }));
+            });
             setAuctionOffers(offers);
           }
         }
@@ -159,20 +201,25 @@ export default function ItemDetail() {
 
   const acceptOffer = async (tradeId: string, offererId: string, offeredItemId: string) => {
     try {
+      // OPTIMIZATION: Use writeBatch to perform multiple updates atomically in 1 network round-trip instead of 3+ N sequential calls
+      const batch = writeBatch(db);
+
       // Update accepted trade
-      await updateDoc(doc(db, 'trades', tradeId), { status: 'accepted' });
+      batch.update(doc(db, 'trades', tradeId), { status: 'accepted' });
       
       // Reject other trades
       const otherOffers = auctionOffers.filter(o => o.id !== tradeId);
       for (const offer of otherOffers) {
-        await updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' });
+        batch.update(doc(db, 'trades', offer.id), { status: 'rejected' });
       }
 
       // Update items status
-      await updateDoc(doc(db, 'items', item.id), { status: 'traded' });
-      await updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' });
+      batch.update(doc(db, 'items', item.id), { status: 'traded' });
+      batch.update(doc(db, 'items', offeredItemId), { status: 'traded' });
 
-      // Update challenges
+      await batch.commit();
+
+      // Update challenges (These perform their own reads/writes so we leave them outside the main batch)
       await updateChallengeIfActive(item.ownerId, item.id, offeredItemId);
       await updateChallengeIfActive(offererId, offeredItemId, item.id);
 

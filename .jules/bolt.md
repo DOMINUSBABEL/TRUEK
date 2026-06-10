@@ -4,3 +4,7 @@
 ## 2025-03-10 - O(1) Local Caching with Firestore 'in' queries
 **Learning:** Firestore N+1 queries during mapping operations (e.g. mapping over trade documents to fetch target and offered item docs via `getDoc`) lead to severe latency, with 2N+1 round trips. Firestore supports 'in' queries, but limits them to 30 elements.
 **Action:** Extract distinct item IDs into a `Set`, chunk them to arrays of max 30 length, fetch concurrently with `Promise.all` and `where(documentId(), 'in', chunk)`, and map results to a local dictionary (`Record<string, any>`) to reconstruct component state in `O(1)` operations.
+
+## 2024-05-18 - Avoid Sequential Updates in Firebase Trades
+**Learning:** In highly interdependent state updates (like accepting an offer which requires updating the trade, related items, rejecting other offers, and checking challenges), performing them sequentially with `updateDoc` causes significant UI latency (multiple network round-trips N+3) and risks incomplete state if the client loses connection mid-process. Also, fetching related user and item metadata sequentially per offer in auctions leads to an N+1 read pattern.
+**Action:** Always extract distinct entity IDs and use chunked `in` queries (`where(documentId(), 'in', chunk)`) coupled with `Promise.all` to build an O(1) local cache dictionary. For multi-document state updates, always bundle them using `writeBatch(db)` to guarantee atomicity and reduce latency to a single network round trip.
