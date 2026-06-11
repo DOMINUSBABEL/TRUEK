@@ -4,3 +4,7 @@
 ## 2025-03-10 - O(1) Local Caching with Firestore 'in' queries
 **Learning:** Firestore N+1 queries during mapping operations (e.g. mapping over trade documents to fetch target and offered item docs via `getDoc`) lead to severe latency, with 2N+1 round trips. Firestore supports 'in' queries, but limits them to 30 elements.
 **Action:** Extract distinct item IDs into a `Set`, chunk them to arrays of max 30 length, fetch concurrently with `Promise.all` and `where(documentId(), 'in', chunk)`, and map results to a local dictionary (`Record<string, any>`) to reconstruct component state in `O(1)` operations.
+
+## 2023-11-09 - Firestore Trade Acceptance Optimization
+**Learning:** Sequential `updateDoc` calls for accepting a trade (updating trade status, items, and rejecting conflicts) created a significant "waterfall" of network round-trips. Furthermore, triggering related side-effects (like Challenge updates) sequentially amplified this latency.
+**Action:** Use Firestore's `writeBatch` to bundle related document updates into a single atomic transaction, reducing network overhead to O(1). Additionally, use `Promise.all` to run independent asynchronous side-effects concurrently.
