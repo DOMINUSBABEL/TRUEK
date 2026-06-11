@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
+import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -129,12 +129,16 @@ export default function Trades() {
 
   const handleAccept = async (trade: any) => {
     try {
+      // OPTIMIZATION: Use writeBatch to consolidate multiple updateDoc calls
+      // into a single network request (O(N) -> O(1) round-trips)
+      const batch = writeBatch(db);
+
       // Update trade status
-      await updateDoc(doc(db, 'trades', trade.id), { status: 'accepted' });
+      batch.update(doc(db, 'trades', trade.id), { status: 'accepted' });
       
       // Update items status
-      await updateDoc(doc(db, 'items', trade.targetItemId), { status: 'traded' });
-      await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
+      batch.update(doc(db, 'items', trade.targetItemId), { status: 'traded' });
+      batch.update(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
       // Reject other pending trades for these items
       const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
@@ -142,13 +146,19 @@ export default function Trades() {
       for (const tDoc of snapshot.docs) {
         const tData = tDoc.data();
         if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
-          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
+          batch.update(doc(db, 'trades', tData.id), { status: 'rejected' });
         }
       }
 
-      // Update challenges
-      await updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId);
-      await updateChallengeIfActive(trade.offererId, trade.offeredItemId, trade.targetItemId);
+      // Commit the batch of updates
+      await batch.commit();
+
+      // OPTIMIZATION: Use Promise.all to execute independent asynchronous challenge
+      // update calls concurrently to avoid sequential 'waterfall' latency
+      await Promise.all([
+        updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId),
+        updateChallengeIfActive(trade.offererId, trade.offeredItemId, trade.targetItemId)
+      ]);
 
       toast.success('¡Trueque aceptado!');
       fetchTrades();
