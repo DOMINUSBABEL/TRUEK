@@ -1,0 +1,3 @@
+## 2024-05-24 - Accessibility for Search and Filter Form Inputs
+**Learning:** Visually label-less inputs like search fields and filter dropdowns are common but fail accessibility without explicit `aria-label` attributes. It is also important to give them explicit keyboard focus states (`focus-visible:ring-2`, etc.), add `cursor-pointer` to selects for mouse users, and hide adjacent decorative icons from screen readers using `aria-hidden="true"`.
+**Action:** Always verify that input/select elements without visible text `<label>`s contain an `aria-label`, explicitly handle `focus-visible`, and hide decorative icons.
