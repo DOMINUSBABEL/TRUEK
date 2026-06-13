@@ -136,15 +136,28 @@ export default function Trades() {
       await updateDoc(doc(db, 'items', trade.targetItemId), { status: 'traded' });
       await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
-      // Reject other pending trades for these items
-      const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
-      const snapshot = await getDocs(q);
-      for (const tDoc of snapshot.docs) {
-        const tData = tDoc.data();
-        if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
-          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
+      // OPTIMIZATION: Prevent full collection scans by querying specifically for the affected item IDs.
+      // We avoid mixing 'in' and 'or' clauses to prevent TypeScript errors, and filter 'status' locally to avoid requiring complex composite indexes.
+      const q1 = query(collection(db, 'trades'), where('targetItemId', 'in', [trade.targetItemId, trade.offeredItemId]));
+      const q2 = query(collection(db, 'trades'), where('offeredItemId', 'in', [trade.targetItemId, trade.offeredItemId]));
+
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+      const tradesToReject = new Set<string>();
+      const processDoc = (d: any) => {
+        const data = d.data();
+        if (d.id !== trade.id && data.status === 'pending') {
+          tradesToReject.add(d.id);
         }
-      }
+      };
+
+      snap1.docs.forEach(processDoc);
+      snap2.docs.forEach(processDoc);
+
+      // Execute rejection updates concurrently
+      await Promise.all(
+        Array.from(tradesToReject).map(id => updateDoc(doc(db, 'trades', id), { status: 'rejected' }))
+      );
 
       // Update challenges
       await updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId);
