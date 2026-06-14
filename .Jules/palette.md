@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2026-06-14 - Form Label Click Targets
+**Learning:** In Truekio's `AddItem.tsx` form, the labels were styled as block elements. When explicit `htmlFor` associations were added, clicking anywhere on the line corresponding to the label would focus the input, which is unexpected behavior.
+**Action:** When adding `htmlFor` to block-level labels to improve accessibility, append Tailwind classes like `w-fit` and `cursor-pointer` to ensure the clickable touch target strictly encompasses only the label text.
