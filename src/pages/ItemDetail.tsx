@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle, Star, Loader2 } from 'lucide-react';
@@ -40,17 +40,51 @@ export default function ItemDetail() {
             const q = query(collection(db, 'trades'), where('targetItemId', '==', id), where('status', '==', 'pending'));
             const snapshot = await getDocs(q);
             
-            const offers = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+            // OPTIMIZATION: Prevent N+1 queries by extracting distinct user IDs and item IDs
+            // and fetching them concurrently in bulk rather than per-offer.
+            const userIds = new Set<string>();
+            const itemIds = new Set<string>();
+            snapshot.docs.forEach(tradeDoc => {
+              const data = tradeDoc.data();
+              if (data.offererId) userIds.add(data.offererId);
+              if (data.offeredItemId) itemIds.add(data.offeredItemId);
+            });
+
+            const uniqueUserIds = Array.from(userIds);
+            const uniqueItemIds = Array.from(itemIds);
+
+            const usersDict: Record<string, any> = {};
+            const itemsDict: Record<string, any> = {};
+
+            const fetchChunks = async (ids: string[], collectionName: string, dict: Record<string, any>) => {
+              if (ids.length === 0) return;
+              const chunks = [];
+              for (let i = 0; i < ids.length; i += 30) {
+                chunks.push(ids.slice(i, i + 30));
+              }
+              await Promise.all(chunks.map(async (chunk) => {
+                const chunkQuery = query(collection(db, collectionName), where(documentId(), 'in', chunk));
+                const chunkSnap = await getDocs(chunkQuery);
+                chunkSnap.docs.forEach(d => {
+                  dict[d.id] = d.data();
+                });
+              }));
+            };
+
+            await Promise.all([
+              fetchChunks(uniqueUserIds, 'users', usersDict),
+              fetchChunks(uniqueItemIds, 'items', itemsDict)
+            ]);
+
+            const offers = snapshot.docs.map(tradeDoc => {
               const tradeData = tradeDoc.data();
-              const offeredItemDoc = await getDoc(doc(db, 'items', tradeData.offeredItemId));
-              const offererDoc = await getDoc(doc(db, 'users', tradeData.offererId));
               return {
                 id: tradeDoc.id,
                 ...tradeData,
-                offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null,
-                offerer: offererDoc.exists() ? offererDoc.data() : null
+                offeredItem: itemsDict[tradeData.offeredItemId] || null,
+                offerer: usersDict[tradeData.offererId] || null
               };
-            }));
+            });
             setAuctionOffers(offers);
           }
         }
