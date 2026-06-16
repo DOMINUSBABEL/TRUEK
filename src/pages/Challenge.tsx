@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Trophy, TrendingUp, Medal, ArrowRight, PlusCircle } from 'lucide-react';
@@ -41,13 +41,35 @@ export default function Challenge() {
             setActiveChallenge({ id: challengeSnap.docs[0].id, ...challengeData });
             
             // Fetch history items
-            const historyItems = await Promise.all(
-              challengeData.history.map(async (itemId: string) => {
-                const itemDoc = await getDoc(doc(db, 'items', itemId));
-                return itemDoc.exists() ? { id: itemDoc.id, ...itemDoc.data() } : null;
-              })
-            );
-            setChallengeHistory(historyItems.filter(Boolean));
+            // ⚡ Bolt: Resolve N+1 query bottleneck by fetching all required history items concurrently in chunks.
+            // This transforms O(N) separate document fetch requests into O(N/30) requests.
+            const uniqueHistoryIds = [...new Set(challengeData.history as string[])];
+
+            if (uniqueHistoryIds.length > 0) {
+              const historyItemDict: Record<string, any> = {};
+              const chunkedIds: string[][] = [];
+
+              // Firestore 'in' queries are limited to 30 elements
+              for (let i = 0; i < uniqueHistoryIds.length; i += 30) {
+                chunkedIds.push(uniqueHistoryIds.slice(i, i + 30));
+              }
+
+              await Promise.all(
+                chunkedIds.map(async (chunk) => {
+                  const itemsQuery = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+                  const itemsSnapshot = await getDocs(itemsQuery);
+                  itemsSnapshot.forEach((doc) => {
+                    historyItemDict[doc.id] = { id: doc.id, ...doc.data() };
+                  });
+                })
+              );
+
+              // Reconstruct the history array maintaining the original order and duplicates if any
+              const historyItems = challengeData.history.map((itemId: string) => historyItemDict[itemId] || null);
+              setChallengeHistory(historyItems.filter(Boolean));
+            } else {
+              setChallengeHistory([]);
+            }
           }
         }
       } catch (error) {
