@@ -136,15 +136,37 @@ export default function Trades() {
       await updateDoc(doc(db, 'items', trade.targetItemId), { status: 'traded' });
       await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
-      // Reject other pending trades for these items
-      const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
-      const snapshot = await getDocs(q);
-      for (const tDoc of snapshot.docs) {
-        const tData = tDoc.data();
-        if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
-          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
-        }
-      }
+      // OPTIMIZATION: Prevent O(N) full collection scan of all pending trades
+      // by fetching only trades associated with the involved items concurrently,
+      // and filtering for 'pending' status locally in-memory.
+      const rejectPromises: Promise<void>[] = [];
+      const itemsInvolved = [trade.targetItemId, trade.offeredItemId];
+
+      const overlappingQueries = [
+        ...itemsInvolved.map(itemId => query(collection(db, 'trades'), where('targetItemId', '==', itemId))),
+        ...itemsInvolved.map(itemId => query(collection(db, 'trades'), where('offeredItemId', '==', itemId)))
+      ];
+
+      const querySnapshots = await Promise.all(overlappingQueries.map(q => getDocs(q)));
+
+      // Use a Set to prevent processing the same trade document multiple times
+      const processedTradeIds = new Set<string>();
+      processedTradeIds.add(trade.id); // Skip the accepted trade
+
+      querySnapshots.forEach(snapshot => {
+        snapshot.docs.forEach(tDoc => {
+          if (!processedTradeIds.has(tDoc.id)) {
+            processedTradeIds.add(tDoc.id);
+            const tData = tDoc.data();
+            if (tData.status === 'pending') {
+              rejectPromises.push(updateDoc(doc(db, 'trades', tDoc.id), { status: 'rejected' }));
+            }
+          }
+        });
+      });
+
+      // Execute all rejection updates concurrently
+      await Promise.all(rejectPromises);
 
       // Update challenges
       await updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId);
