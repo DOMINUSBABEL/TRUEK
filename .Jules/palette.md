@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2024-06-19 - Form Label Focus & Click Areas
+**Learning:** Adding `w-fit` alongside `cursor-pointer` to explicitly associated form `<label>`s (using `htmlFor`) prevents the clickable touch target area from spanning the entire width of the parent container, avoiding unintended input focus when users click empty space beside a label.
+**Action:** When improving label accessibility, always pair `htmlFor` with `cursor-pointer w-fit` to ensure the interactive area precisely matches the visual text.
