@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2024-05-18 - Prevent Screen Reader Redundancy on Required Fields
+**Learning:** In forms using HTML5 `required` attributes, screen readers automatically announce that the field is required. If a visual asterisk `*` is added to the label for sighted users without hiding it, screen readers will redundantly read "asterisk", worsening the UX.
+**Action:** Always wrap purely visual required indicators like `*` in an element with `aria-hidden="true"` (e.g., `<span aria-hidden="true">*</span>`) when the input already has the `required` attribute.
