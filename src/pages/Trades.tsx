@@ -137,14 +137,26 @@ export default function Trades() {
       await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
       // Reject other pending trades for these items
-      const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
-      const snapshot = await getDocs(q);
-      for (const tDoc of snapshot.docs) {
+      // Optimization: Fetch only trades related to these items instead of full collection scan
+      const itemIds = [trade.targetItemId, trade.offeredItemId];
+      const q1 = query(collection(db, 'trades'), where('targetItemId', 'in', itemIds));
+      const q2 = query(collection(db, 'trades'), where('offeredItemId', 'in', itemIds));
+
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+      const tradesToReject = new Map();
+      [...snap1.docs, ...snap2.docs].forEach(tDoc => {
         const tData = tDoc.data();
-        if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
-          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
+        if (tDoc.id !== trade.id && tData.status === 'pending') {
+          tradesToReject.set(tDoc.id, tDoc);
         }
-      }
+      });
+
+      await Promise.all(
+        Array.from(tradesToReject.values()).map(tDoc =>
+          updateDoc(doc(db, 'trades', tDoc.id), { status: 'rejected' })
+        )
+      );
 
       // Update challenges
       await updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId);
