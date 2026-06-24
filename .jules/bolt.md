@@ -4,3 +4,6 @@
 ## 2025-03-10 - O(1) Local Caching with Firestore 'in' queries
 **Learning:** Firestore N+1 queries during mapping operations (e.g. mapping over trade documents to fetch target and offered item docs via `getDoc`) lead to severe latency, with 2N+1 round trips. Firestore supports 'in' queries, but limits them to 30 elements.
 **Action:** Extract distinct item IDs into a `Set`, chunk them to arrays of max 30 length, fetch concurrently with `Promise.all` and `where(documentId(), 'in', chunk)`, and map results to a local dictionary (`Record<string, any>`) to reconstruct component state in `O(1)` operations.
+## 2025-03-10 - [O(1) Local Caching with chunked array]
+**Learning:** Sequential `.map` operations combined with `Promise.all(history.map(async id => getDoc(id)))` effectively recreate severe N+1 queries by fetching individual documents inside an array iteratively, multiplying network roundtrips.
+**Action:** Extract specific entities, chunk the array payload for `in` queries (up to limit of 30), concurrent `Promise.all()` fetching on chunks, and cache locally using a O(1) dictionary (`Record<string, any>`) array remapping structure to perfectly optimize document fetches while preventing invalid network requests.
