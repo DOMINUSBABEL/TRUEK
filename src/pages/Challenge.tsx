@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Trophy, TrendingUp, Medal, ArrowRight, PlusCircle } from 'lucide-react';
@@ -40,14 +40,29 @@ export default function Challenge() {
             const challengeData = challengeSnap.docs[0].data();
             setActiveChallenge({ id: challengeSnap.docs[0].id, ...challengeData });
             
-            // Fetch history items
-            const historyItems = await Promise.all(
-              challengeData.history.map(async (itemId: string) => {
-                const itemDoc = await getDoc(doc(db, 'items', itemId));
-                return itemDoc.exists() ? { id: itemDoc.id, ...itemDoc.data() } : null;
-              })
-            );
-            setChallengeHistory(historyItems.filter(Boolean));
+            // OPTIMIZATION: Prevent N+1 queries by fetching history items concurrently in chunks
+            const historyIds = challengeData.history;
+            const uniqueHistoryIds = Array.from(new Set(historyIds)) as string[];
+            const itemsDict: Record<string, any> = {};
+
+            if (uniqueHistoryIds.length > 0) {
+              const chunkSize = 30; // Firestore 'in' query limit
+              const chunks = [];
+              for (let i = 0; i < uniqueHistoryIds.length; i += chunkSize) {
+                chunks.push(uniqueHistoryIds.slice(i, i + chunkSize));
+              }
+
+              await Promise.all(chunks.map(async (chunk) => {
+                const itemsQuery = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+                const itemsSnapshot = await getDocs(itemsQuery);
+                itemsSnapshot.docs.forEach(doc => {
+                  itemsDict[doc.id] = { id: doc.id, ...doc.data() };
+                });
+              }));
+            }
+
+            const historyItems = historyIds.map((itemId: string) => itemsDict[itemId]).filter(Boolean);
+            setChallengeHistory(historyItems);
           }
         }
       } catch (error) {
