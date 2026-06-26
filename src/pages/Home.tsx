@@ -119,7 +119,8 @@ export default function Home() {
           
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <select 
-              className="bg-surface text-gray-300 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-full border border-white/5 outline-none focus:border-primary/50 appearance-none"
+              aria-label="Filter by category"
+              className="bg-surface text-gray-300 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-full border border-white/5 outline-none focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none appearance-none"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
@@ -133,7 +134,8 @@ export default function Home() {
             </select>
             
             <select 
-              className="bg-surface text-gray-300 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-full border border-white/5 outline-none focus:border-primary/50 appearance-none"
+              aria-label="Sort items"
+              className="bg-surface text-gray-300 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-full border border-white/5 outline-none focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none appearance-none"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
@@ -156,12 +158,12 @@ export default function Home() {
           {searchTerm || selectedCategory !== 'all' ? (
             <button 
               onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
-              className="text-primary text-xs font-bold tracking-widest uppercase hover:text-primary-hover transition-colors"
+              className="text-primary text-xs font-bold tracking-widest uppercase hover:text-primary-hover transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded"
             >
               Clear Filters
             </button>
           ) : (
-            <Link to="/add" className="text-primary text-xs font-bold tracking-widest uppercase hover:text-primary-hover transition-colors">
+            <Link to="/add" className="text-primary text-xs font-bold tracking-widest uppercase hover:text-primary-hover transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none rounded">
               Be the first to publish
             </Link>
           )}
