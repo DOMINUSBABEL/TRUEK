@@ -107,10 +107,11 @@ export default function Home() {
         {/* Search and Filters */}
         <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" aria-hidden="true" />
             <input 
               type="text" 
               placeholder="Search assets..." 
+              aria-label="Search assets"
               className="w-full pl-12 pr-4 py-3.5 bg-surface border border-white/5 focus:bg-surface-light focus:border-primary/50 rounded-full transition-all outline-none text-sm text-white placeholder-gray-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -119,6 +120,7 @@ export default function Home() {
           
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <select 
+              aria-label="Filter by category"
               className="bg-surface text-gray-300 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-full border border-white/5 outline-none focus:border-primary/50 appearance-none"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -133,6 +135,7 @@ export default function Home() {
             </select>
             
             <select 
+              aria-label="Sort by"
               className="bg-surface text-gray-300 text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-full border border-white/5 outline-none focus:border-primary/50 appearance-none"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
