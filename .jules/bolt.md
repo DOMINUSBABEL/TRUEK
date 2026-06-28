@@ -4,3 +4,6 @@
 ## 2025-03-10 - O(1) Local Caching with Firestore 'in' queries
 **Learning:** Firestore N+1 queries during mapping operations (e.g. mapping over trade documents to fetch target and offered item docs via `getDoc`) lead to severe latency, with 2N+1 round trips. Firestore supports 'in' queries, but limits them to 30 elements.
 **Action:** Extract distinct item IDs into a `Set`, chunk them to arrays of max 30 length, fetch concurrently with `Promise.all` and `where(documentId(), 'in', chunk)`, and map results to a local dictionary (`Record<string, any>`) to reconstruct component state in `O(1)` operations.
+## 2025-02-24 - Firestore Status Collection Scans Anti-Pattern
+**Learning:** Found a full collection scan querying `where('status', '==', 'pending')` in Trades.tsx, iterating through the entire collection to find trades matching specific item IDs. This caused an O(N) data transfer overhead (where N is all pending trades), which would heavily degrade performance and increase Firebase costs as the platform scales.
+**Action:** Replace generic status-based queries with specific, concurrent queries scoped by related entity IDs using `Promise.all()` (e.g. `where('targetItemId', 'in', itemIds)` and `where('offeredItemId', 'in', itemIds)`), filtering the secondary status criterion locally in memory. This reduces query complexity from O(N) to O(1) matching items.
