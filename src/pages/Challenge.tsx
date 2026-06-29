@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Trophy, TrendingUp, Medal, ArrowRight, PlusCircle } from 'lucide-react';
@@ -41,13 +41,21 @@ export default function Challenge() {
             setActiveChallenge({ id: challengeSnap.docs[0].id, ...challengeData });
             
             // Fetch history items
-            const historyItems = await Promise.all(
-              challengeData.history.map(async (itemId: string) => {
-                const itemDoc = await getDoc(doc(db, 'items', itemId));
-                return itemDoc.exists() ? { id: itemDoc.id, ...itemDoc.data() } : null;
-              })
-            );
-            setChallengeHistory(historyItems.filter(Boolean));
+            const uniqueItemIds = Array.from(new Set<string>(challengeData.history));
+            const itemsDict: Record<string, any> = {};
+            if (uniqueItemIds.length > 0) {
+              const chunks = [];
+              for (let i = 0; i < uniqueItemIds.length; i += 30) {
+                chunks.push(uniqueItemIds.slice(i, i + 30));
+              }
+              await Promise.all(chunks.map(async (chunk) => {
+                const q = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+                const snap = await getDocs(q);
+                snap.docs.forEach(d => { itemsDict[d.id] = { id: d.id, ...d.data() }; });
+              }));
+            }
+            const historyItems = challengeData.history.map((itemId: string) => itemsDict[itemId]).filter(Boolean);
+            setChallengeHistory(historyItems);
           }
         }
       } catch (error) {
