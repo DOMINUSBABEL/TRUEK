@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { collection, query, where, getDoc, doc, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, orderBy, onSnapshot, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -26,22 +26,44 @@ export default function Messages() {
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const chatPromises = snapshot.docs.map(async (chatDoc) => {
+      // OPTIMIZATION: Extract distinct missing user IDs
+      const missingUserIds = new Set<string>();
+
+      snapshot.docs.forEach((chatDoc) => {
+        const chatData = chatDoc.data();
+        const otherUserId = chatData.participants.find((id: string) => id !== user.uid);
+        if (otherUserId && !userCache.current[otherUserId]) {
+          missingUserIds.add(otherUserId);
+        }
+      });
+
+      const uniqueMissingUserIds = Array.from(missingUserIds);
+
+      // OPTIMIZATION: Fetch missing users in chunks using Firestore 'in' query to avoid N+1 queries
+      if (uniqueMissingUserIds.length > 0) {
+        const chunkSize = 30;
+        const chunks = [];
+        for (let i = 0; i < uniqueMissingUserIds.length; i += chunkSize) {
+          chunks.push(uniqueMissingUserIds.slice(i, i + chunkSize));
+        }
+
+        await Promise.all(chunks.map(async (chunk) => {
+          const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', chunk));
+          const usersSnapshot = await getDocs(usersQuery);
+          usersSnapshot.docs.forEach(doc => {
+            userCache.current[doc.id] = doc.data(); // Cache the fetched user
+          });
+        }));
+      }
+
+      // Synchronously map chats using the populated cache
+      const resolvedChats = snapshot.docs.map((chatDoc) => {
         const chatData = chatDoc.data();
         const otherUserId = chatData.participants.find((id: string) => id !== user.uid);
         
-        // Fetch other user's details with caching and direct doc lookup
         let otherUser = { displayName: 'Usuario Desconocido', photoURL: '' };
-        if (otherUserId) {
-          if (userCache.current[otherUserId]) {
-            otherUser = userCache.current[otherUserId];
-          } else {
-            const userDoc = await getDoc(doc(db, 'users', otherUserId));
-            if (userDoc.exists()) {
-              otherUser = userDoc.data() as any;
-              userCache.current[otherUserId] = otherUser;
-            }
-          }
+        if (otherUserId && userCache.current[otherUserId]) {
+          otherUser = userCache.current[otherUserId];
         }
 
         return {
@@ -51,7 +73,6 @@ export default function Messages() {
         };
       });
 
-      const resolvedChats = await Promise.all(chatPromises);
       setChats(resolvedChats);
       setLoading(false);
     });
