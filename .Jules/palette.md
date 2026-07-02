@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2024-07-02 - Tailwind V4 Accessibility Pseudo-classes
+**Learning:** Tailwind CSS v4 handles generic state pseudo-classes well, but specific accessibility pseudo-classes like `focus-visible` must be explicitly combined with the property they change (e.g., `focus-visible:ring-2 focus-visible:ring-primary`). Also, decorative icons next to inputs need `aria-hidden="true"` to prevent screen readers from redundantly announcing the icon along with the `aria-label` of the input.
+**Action:** When adding accessible focus states to inputs without visual labels, consistently apply `focus-visible` ring classes and an explicit `aria-label`, ensuring nearby decorative elements are explicitly hidden from the accessibility tree.

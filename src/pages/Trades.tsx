@@ -188,14 +188,15 @@ export default function Trades() {
       
       <div className="mb-8 relative">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+          <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
         <input
           type="text"
           placeholder="Search by item title or status..."
+          aria-label="Search trades"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3.5 bg-surface border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-sm"
+          className="w-full pl-11 pr-4 py-3.5 bg-surface border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-sm"
         />
       </div>
       
