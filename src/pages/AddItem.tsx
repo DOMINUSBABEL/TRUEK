@@ -124,8 +124,11 @@ export default function AddItem() {
 
         <div className="space-y-5">
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">What are you offering?</label>
+            <label htmlFor="title" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">
+              What are you offering?<span className="text-red-500 ml-1" aria-hidden="true">*</span>
+            </label>
             <input
+              id="title"
               type="text"
               required
               placeholder="e.g. Fender Electric Guitar"
@@ -136,8 +139,11 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Description</label>
+            <label htmlFor="description" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">
+              Description<span className="text-red-500 ml-1" aria-hidden="true">*</span>
+            </label>
             <textarea
+              id="description"
               required
               rows={3}
               placeholder="Details, condition, etc."
@@ -149,8 +155,9 @@ export default function AddItem() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Condition</label>
+              <label htmlFor="condition" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">Condition</label>
               <select
+                id="condition"
                 className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none"
                 value={formData.condition}
                 onChange={e => setFormData({...formData, condition: e.target.value})}
@@ -162,8 +169,9 @@ export default function AddItem() {
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Category</label>
+              <label htmlFor="category" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">Category</label>
               <select
+                id="category"
                 className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white text-sm appearance-none"
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value})}
@@ -179,8 +187,9 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">City</label>
+            <label htmlFor="location" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">City</label>
             <input
+              id="location"
               type="text"
               placeholder="e.g. Medellín"
               className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"
@@ -190,8 +199,9 @@ export default function AddItem() {
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Looking for</label>
+            <label htmlFor="lookingFor" className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2 cursor-pointer w-fit">Looking for</label>
             <input
+              id="lookingFor"
               type="text"
               placeholder="e.g. Gaming console, bike..."
               className="w-full px-5 py-4 rounded-2xl bg-surface border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-white placeholder-gray-600 text-sm"
@@ -225,7 +235,14 @@ export default function AddItem() {
           disabled={loading}
           className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full shadow-[0_0_20px_rgba(124,77,255,0.3)] hover:bg-primary-hover disabled:opacity-70 disabled:cursor-not-allowed transition-colors flex justify-center items-center mt-8 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
         >
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publish Asset'}
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+              <span className="sr-only">Publishing...</span>
+            </>
+          ) : (
+            'Publish Asset'
+          )}
         </button>
       </form>
     </div>
