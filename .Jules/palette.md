@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2025-03-09 - Accessibility of Form Elements without Visible Labels
+**Learning:** In some screens (like the search bar in `Home.tsx` and `Trades.tsx`, or the category/sort select menus), the application relies solely on placeholder text or surrounding layout context rather than explicit `<label>` tags. Screen readers cannot reliably announce the purpose of these inputs.
+**Action:** When a form element (like a search `<input>` or filter `<select>`) lacks a visible text label for design reasons, it must include an explicit `aria-label` attribute (localized to match the placeholder language) to provide accessible context. Additionally, ensure explicit keyboard focus states (`focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none`) are present for keyboard navigators.
