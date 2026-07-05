@@ -137,11 +137,28 @@ export default function Trades() {
       await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
       // Reject other pending trades for these items
-      const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
-      const snapshot = await getDocs(q);
-      for (const tDoc of snapshot.docs) {
+      // OPTIMIZATION: Avoid full collection scans for 'pending' trades. Fetch only
+      // trades related to the overlapping items using concurrent 'in' queries and filter
+      // the status locally to reduce O(N) DB reads to O(1) targeted queries.
+      const itemIds = [trade.targetItemId, trade.offeredItemId];
+
+      const targetQuery = query(collection(db, 'trades'), where('targetItemId', 'in', itemIds));
+      const offeredQuery = query(collection(db, 'trades'), where('offeredItemId', 'in', itemIds));
+
+      const [targetSnap, offeredSnap] = await Promise.all([
+        getDocs(targetQuery),
+        getDocs(offeredQuery)
+      ]);
+
+      const allRelatedTrades = [...targetSnap.docs, ...offeredSnap.docs];
+      const uniqueTradesMap = new Map();
+      allRelatedTrades.forEach(doc => {
+        uniqueTradesMap.set(doc.id, doc);
+      });
+
+      for (const tDoc of uniqueTradesMap.values()) {
         const tData = tDoc.data();
-        if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
+        if (tData.id !== trade.id && tData.status === 'pending') {
           await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
         }
       }
