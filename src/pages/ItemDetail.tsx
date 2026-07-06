@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, setDoc, updateDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { MapPin, Clock, ShieldCheck, ArrowLeft, HeartHandshake, CheckCircle, Star, Loader2 } from 'lucide-react';
@@ -40,17 +40,51 @@ export default function ItemDetail() {
             const q = query(collection(db, 'trades'), where('targetItemId', '==', id), where('status', '==', 'pending'));
             const snapshot = await getDocs(q);
             
-            const offers = await Promise.all(snapshot.docs.map(async (tradeDoc) => {
+            // OPTIMIZATION: Prevent N+1 queries by extracting distinct item and user IDs
+            const itemIds = new Set<string>();
+            const userIds = new Set<string>();
+            snapshot.docs.forEach(doc => {
+              const data = doc.data();
+              if (data.offeredItemId) itemIds.add(data.offeredItemId);
+              if (data.offererId) userIds.add(data.offererId);
+            });
+
+            const uniqueItemIds = Array.from(itemIds);
+            const uniqueUserIds = Array.from(userIds);
+            const itemsDict: Record<string, any> = {};
+            const usersDict: Record<string, any> = {};
+
+            // Helper to chunk arrays for Firestore 'in' queries (max 30 elements)
+            const chunkArray = (arr: string[], size: number) =>
+              Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
+            // Fetch all items concurrently in chunks
+            const itemChunks = chunkArray(uniqueItemIds, 30);
+            await Promise.all(itemChunks.map(async (chunk) => {
+              if (chunk.length === 0) return;
+              const itemsQ = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+              const itemsSnap = await getDocs(itemsQ);
+              itemsSnap.docs.forEach(d => { itemsDict[d.id] = d.data(); });
+            }));
+
+            // Fetch all users concurrently in chunks
+            const userChunks = chunkArray(uniqueUserIds, 30);
+            await Promise.all(userChunks.map(async (chunk) => {
+              if (chunk.length === 0) return;
+              const usersQ = query(collection(db, 'users'), where(documentId(), 'in', chunk));
+              const usersSnap = await getDocs(usersQ);
+              usersSnap.docs.forEach(d => { usersDict[d.id] = d.data(); });
+            }));
+
+            const offers = snapshot.docs.map(tradeDoc => {
               const tradeData = tradeDoc.data();
-              const offeredItemDoc = await getDoc(doc(db, 'items', tradeData.offeredItemId));
-              const offererDoc = await getDoc(doc(db, 'users', tradeData.offererId));
               return {
                 id: tradeDoc.id,
                 ...tradeData,
-                offeredItem: offeredItemDoc.exists() ? offeredItemDoc.data() : null,
-                offerer: offererDoc.exists() ? offererDoc.data() : null
+                offeredItem: itemsDict[tradeData.offeredItemId] || null,
+                offerer: usersDict[tradeData.offererId] || null
               };
-            }));
+            });
             setAuctionOffers(offers);
           }
         }
