@@ -138,15 +138,25 @@ export default function Trades() {
       await updateDoc(doc(db, 'items', trade.targetItemId), { status: 'traded' });
       await updateDoc(doc(db, 'items', trade.offeredItemId), { status: 'traded' });
 
-      // Reject other pending trades for these items
-      const q = query(collection(db, 'trades'), where('status', '==', 'pending'));
-      const snapshot = await getDocs(q);
-      for (const tDoc of snapshot.docs) {
-        const tData = tDoc.data();
-        if (tData.id !== trade.id && (tData.targetItemId === trade.targetItemId || tData.offeredItemId === trade.offeredItemId || tData.targetItemId === trade.offeredItemId || tData.offeredItemId === trade.targetItemId)) {
-          await updateDoc(doc(db, 'trades', tData.id), { status: 'rejected' });
-        }
-      }
+      // ⚡ Bolt Optimization: Batch queries by item instead of full table scan
+      const q1 = query(collection(db, 'trades'), where('status', '==', 'pending'), where('targetItemId', '==', trade.targetItemId));
+      const q2 = query(collection(db, 'trades'), where('status', '==', 'pending'), where('offeredItemId', '==', trade.targetItemId));
+      const q3 = query(collection(db, 'trades'), where('status', '==', 'pending'), where('targetItemId', '==', trade.offeredItemId));
+      const q4 = query(collection(db, 'trades'), where('status', '==', 'pending'), where('offeredItemId', '==', trade.offeredItemId));
+
+      const [snap1, snap2, snap3, snap4] = await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3), getDocs(q4)]);
+      const uniqueDocsToReject = new Set<string>();
+
+      [snap1, snap2, snap3, snap4].forEach(snap => {
+        snap.forEach(doc => {
+          if (doc.id !== trade.id) uniqueDocsToReject.add(doc.id);
+        });
+      });
+
+      // Execute updates concurrently
+      await Promise.all(Array.from(uniqueDocsToReject).map(id =>
+        updateDoc(doc(db, 'trades', id), { status: 'rejected' })
+      ));
 
       // Update challenges
       await updateChallengeIfActive(trade.targetOwnerId, trade.targetItemId, trade.offeredItemId);

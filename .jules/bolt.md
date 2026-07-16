@@ -4,3 +4,6 @@
 ## 2025-03-10 - O(1) Local Caching with Firestore 'in' queries
 **Learning:** Firestore N+1 queries during mapping operations (e.g. mapping over trade documents to fetch target and offered item docs via `getDoc`) lead to severe latency, with 2N+1 round trips. Firestore supports 'in' queries, but limits them to 30 elements.
 **Action:** Extract distinct item IDs into a `Set`, chunk them to arrays of max 30 length, fetch concurrently with `Promise.all` and `where(documentId(), 'in', chunk)`, and map results to a local dictionary (`Record<string, any>`) to reconstruct component state in `O(1)` operations.
+## 2025-03-10 - [Batch Multiple Firestore Updates to Avoid Full Table Scans]
+**Learning:** In Trades.tsx, checking and updating overlapping "pending" trades for multiple target/offered items initially used a full table scan query for all "pending" trades (`where('status', '==', 'pending')`) which forces fetching ALL pending trades application-wide and checking them in JavaScript (O(N) data transfer).
+**Action:** Replace the global query with specific batched queries scoped by item ID. Use concurrent `Promise.all` to execute multiple precise queries, collect unique document IDs using a Set, and then perform concurrent `updateDoc` calls.
