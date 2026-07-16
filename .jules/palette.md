@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing ARIA labels and focus rings on form controls
+**Learning:** Found a reusable UX pattern where form elements lacking explicit `<label>` tags (like search inputs and filter selects) were missing `aria-label` attributes for screen readers, and lacked explicit `focus-visible` classes for keyboard navigation.
+**Action:** Always ensure that icon-only interactive elements and form controls without visible labels receive `aria-label` attributes matching placeholder/context language, explicitly receive `focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none` classes, and ensure adjacent decorative icons receive `aria-hidden="true"`.
