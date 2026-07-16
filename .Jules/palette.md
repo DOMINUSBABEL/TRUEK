@@ -4,3 +4,6 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+## 2026-05-11 - Enforcing Groundedness for UI Edits
+**Learning:** When generating execution plans that modify specific JSX elements (like adding `aria-hidden` to icons), guessing their exact implementation details without reading them first violates the Groundedness Rule and leads to rejected plans.
+**Action:** Always use `grep -n -C 5 "<ElementName"` or `sed` to locate and read the exact rendering of target UI elements in the source file before proposing modifications to them in an execution plan.

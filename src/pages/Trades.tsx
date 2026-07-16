@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, or, doc, setDoc, getDoc, updateDoc, limit, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox } from 'lucide-react';
+import { ArrowRightLeft, MessageCircle, CheckCircle, XCircle, Search, Inbox, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,7 @@ export default function Trades() {
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [processingTradeId, setProcessingTradeId] = useState<string | null>(null);
 
   const fetchTrades = async () => {
     if (!user) return;
@@ -128,6 +129,7 @@ export default function Trades() {
   };
 
   const handleAccept = async (trade: any) => {
+    setProcessingTradeId(trade.id);
     try {
       // Update trade status
       await updateDoc(doc(db, 'trades', trade.id), { status: 'accepted' });
@@ -165,10 +167,13 @@ export default function Trades() {
     } catch (error) {
       console.error("Error accepting trade:", error);
       toast.error('Error al aceptar el trueque');
+    } finally {
+      setProcessingTradeId(null);
     }
   };
 
   const handleReject = async (tradeId: string) => {
+    setProcessingTradeId(tradeId);
     try {
       await updateDoc(doc(db, 'trades', tradeId), { status: 'rejected' });
       toast.success('Trueque rechazado');
@@ -176,6 +181,8 @@ export default function Trades() {
     } catch (error) {
       console.error("Error rejecting trade:", error);
       toast.error('Error al rechazar el trueque');
+    } finally {
+      setProcessingTradeId(null);
     }
   };
 
@@ -198,13 +205,14 @@ export default function Trades() {
       
       <div className="mb-8 relative">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+          <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
         <input
           type="text"
           placeholder="Search by item title or status..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Search by item title or status"
           className="w-full pl-11 pr-4 py-3.5 bg-surface border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-sm"
         />
       </div>
@@ -216,9 +224,9 @@ export default function Trades() {
           <div className="relative w-32 h-32 mb-6">
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
             <div className="relative w-full h-full bg-surface-light rounded-full border border-white/10 flex items-center justify-center shadow-xl">
-              <Inbox className="w-12 h-12 text-primary/80" />
+              <Inbox className="w-12 h-12 text-primary/80" aria-hidden="true" />
               <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-neutral rounded-full flex items-center justify-center border border-white/10 shadow-lg">
-                <Search className="w-4 h-4 text-gray-400" />
+                <Search className="w-4 h-4 text-gray-400" aria-hidden="true" />
               </div>
             </div>
           </div>
@@ -262,7 +270,7 @@ export default function Trades() {
                       title="Chat"
                       aria-label="Chat"
                     >
-                      <MessageCircle className="w-4 h-4" />
+                      <MessageCircle className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
@@ -274,7 +282,7 @@ export default function Trades() {
                     <span className="text-[10px] font-bold tracking-widest uppercase text-tertiary mt-1">Your Asset</span>
                   </div>
                   <div className="w-10 h-10 rounded-full bg-neutral flex items-center justify-center mx-2 border border-white/5 flex-shrink-0">
-                    <ArrowRightLeft className="w-4 h-4 text-gray-400" />
+                    <ArrowRightLeft className="w-4 h-4 text-gray-400" aria-hidden="true" />
                   </div>
                   <div className="flex-1 flex flex-col items-center text-center">
                     <img src={isMyOffer ? trade.targetItem?.imageUrl : trade.offeredItem?.imageUrl} alt="" className="w-20 h-20 rounded-2xl object-cover mb-3 border border-white/10 shadow-md" />
@@ -287,17 +295,21 @@ export default function Trades() {
                   <div className="flex space-x-3 mt-6 pt-5 border-t border-white/5">
                     <button 
                       onClick={() => handleReject(trade.id)}
-                      className="flex-1 py-3.5 bg-red-500/10 text-red-500 text-xs font-bold tracking-widest uppercase rounded-full hover:bg-red-500/20 transition-colors flex items-center justify-center border border-red-500/20"
+                      disabled={processingTradeId === trade.id}
+                      className="flex-1 py-3.5 bg-red-500/10 text-red-500 text-xs font-bold tracking-widest uppercase rounded-full hover:bg-red-500/20 transition-colors flex items-center justify-center border border-red-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Reject
+                      {processingTradeId === trade.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" /> : <XCircle className="w-4 h-4 mr-2" aria-hidden="true" />}
+                      <span>Reject</span>
+                      {processingTradeId === trade.id && <span className="sr-only">Rejecting trade...</span>}
                     </button>
                     <button 
                       onClick={() => handleAccept(trade)}
-                      className="flex-1 py-3.5 bg-primary text-white text-xs font-bold tracking-widest uppercase rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center shadow-[0_0_15px_rgba(124,77,255,0.3)]"
+                      disabled={processingTradeId === trade.id}
+                      className="flex-1 py-3.5 bg-primary text-white text-xs font-bold tracking-widest uppercase rounded-full hover:bg-primary-hover transition-colors flex items-center justify-center shadow-[0_0_15px_rgba(124,77,255,0.3)] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none"
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Accept
+                      {processingTradeId === trade.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" /> : <CheckCircle className="w-4 h-4 mr-2" aria-hidden="true" />}
+                      <span>Accept</span>
+                      {processingTradeId === trade.id && <span className="sr-only">Accepting trade...</span>}
                     </button>
                   </div>
                 )}
