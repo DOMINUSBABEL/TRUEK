@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Trophy, TrendingUp, Medal, ArrowRight, PlusCircle } from 'lucide-react';
@@ -40,13 +40,29 @@ export default function Challenge() {
             const challengeData = challengeSnap.docs[0].data();
             setActiveChallenge({ id: challengeSnap.docs[0].id, ...challengeData });
             
-            // Fetch history items
-            const historyItems = await Promise.all(
-              challengeData.history.map(async (itemId: string) => {
-                const itemDoc = await getDoc(doc(db, 'items', itemId));
-                return itemDoc.exists() ? { id: itemDoc.id, ...itemDoc.data() } : null;
-              })
-            );
+            // ⚡ Bolt Optimization: Batch fetch history items to prevent N+1 queries
+            const uniqueHistoryIds = Array.from(new Set(challengeData.history as string[]));
+            const itemsDict: Record<string, any> = {};
+
+            const chunkArray = (arr: any[], size: number) => {
+              const chunks = [];
+              for (let i = 0; i < arr.length; i += size) {
+                chunks.push(arr.slice(i, i + size));
+              }
+              return chunks;
+            };
+
+            const itemChunks = chunkArray(uniqueHistoryIds, 30);
+
+            await Promise.all(itemChunks.map(async (chunk) => {
+              if (chunk.length === 0) return;
+              const q = query(collection(db, 'items'), where(documentId(), 'in', chunk));
+              const snap = await getDocs(q);
+              snap.docs.forEach(d => itemsDict[d.id] = { id: d.id, ...d.data() });
+            }));
+
+            // Preserve original history order
+            const historyItems = challengeData.history.map((itemId: string) => itemsDict[itemId] || null);
             setChallengeHistory(historyItems.filter(Boolean));
           }
         }
