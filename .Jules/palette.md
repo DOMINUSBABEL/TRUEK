@@ -4,3 +4,7 @@
 ## 2026-05-11 - Correct Keyboard Focus Emulation for Playwright Validation
 **Learning:** When using Playwright to verify focus-visible styles (like custom focus rings on accessible custom checkboxes), programmatically calling element.focus() does not consistently trigger the :focus-visible CSS pseudo-class. :focus-visible depends on the browser heuristics for keyboard vs. pointer interaction.
 **Action:** Always emulate real keyboard navigation using page.keyboard.press('Tab') when validating focus-visible accessibility styles in Playwright.
+
+## 2026-06-21 - Explicit Form Label Association
+**Learning:** In forms without explicit label associations (e.g., `AddItem.tsx`), screen reader users lack context, and all users suffer from smaller touch targets because clicking the label text does not focus the input.
+**Action:** When creating forms, always link labels to their corresponding inputs using `htmlFor` and `id` attributes. Adding Tailwind's `cursor-pointer` to the label makes it visually clear it's interactive, and `w-fit` prevents the clickable area from expanding to 100% width, avoiding accidental clicks on empty space.
