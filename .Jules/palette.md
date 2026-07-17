@@ -7,3 +7,7 @@
 ## 2026-05-11 - Enforcing Groundedness for UI Edits
 **Learning:** When generating execution plans that modify specific JSX elements (like adding `aria-hidden` to icons), guessing their exact implementation details without reading them first violates the Groundedness Rule and leads to rejected plans.
 **Action:** Always use `grep -n -C 5 "<ElementName"` or `sed` to locate and read the exact rendering of target UI elements in the source file before proposing modifications to them in an execution plan.
+
+## 2025-03-09 - Accessibility of Interactive Loading States
+**Learning:** Async action buttons in the codebase (e.g., submitting an offer) often conditionally swap their text content with a loading spinner icon (like `Loader2`). If this spinner lacks `aria-hidden` and a screen-reader-only text alternative (`sr-only`), screen reader users lose context on what the button is currently doing when activated.
+**Action:** Always wrap loading spinners in async buttons with `aria-hidden="true"` and include a neighboring `<span className="sr-only">Loading action...</span>` element to maintain context for screen readers during async operations.
