@@ -452,9 +452,16 @@ export default function ItemDetail() {
                 <button
                   onClick={submitOffer}
                   disabled={!selectedMyItem || isSubmittingOffer}
-                  className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors shadow-[0_0_20px_rgba(124,77,255,0.3)] flex justify-center items-center"
+                  className="w-full bg-primary text-white text-xs font-bold tracking-widest uppercase py-4 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors shadow-[0_0_20px_rgba(124,77,255,0.3)] flex justify-center items-center focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 >
-                  {isSubmittingOffer ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Enviar Oferta'}
+                  {isSubmittingOffer ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                      <span className="sr-only">Enviando oferta...</span>
+                    </>
+                  ) : (
+                    'Enviar Oferta'
+                  )}
                 </button>
               </div>
             )}
