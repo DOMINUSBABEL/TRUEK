@@ -203,11 +203,13 @@ export default function ItemDetail() {
       // Update accepted trade
       await updateDoc(doc(db, 'trades', tradeId), { status: 'accepted' });
       
-      // Reject other trades
+      // ⚡ Bolt Optimization: Execute multiple Firestore document updates concurrently using Promise.all
+      // to prevent O(N) network latency from sequential await calls in a loop.
       const otherOffers = auctionOffers.filter(o => o.id !== tradeId);
-      for (const offer of otherOffers) {
-        await updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' });
-      }
+      const rejectionPromises = otherOffers.map(offer =>
+        updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' })
+      );
+      await Promise.all(rejectionPromises);
 
       // Update items status
       await updateDoc(doc(db, 'items', item.id), { status: 'traded' });
