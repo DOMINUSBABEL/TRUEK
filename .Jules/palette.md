@@ -7,3 +7,6 @@
 ## 2026-05-11 - Enforcing Groundedness for UI Edits
 **Learning:** When generating execution plans that modify specific JSX elements (like adding `aria-hidden` to icons), guessing their exact implementation details without reading them first violates the Groundedness Rule and leads to rejected plans.
 **Action:** Always use `grep -n -C 5 "<ElementName"` or `sed` to locate and read the exact rendering of target UI elements in the source file before proposing modifications to them in an execution plan.
+## 2023-10-27 - Form Accessibility and UX Polish
+**Learning:** Search inputs lacked clear affordances and `aria-label` attributes. Without `aria-label`, screen readers may struggle with implicit labels from placeholders. Without a clear button, modifying complex or long queries on mobile is tedious.
+**Action:** Always provide explicit `aria-label` or linked `<label>` tags for form inputs and select elements. Additionally, for search inputs, include a clear button (with appropriate `aria-label` and focus states) to quickly reset the input.
