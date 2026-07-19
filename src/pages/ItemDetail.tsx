@@ -205,17 +205,15 @@ export default function ItemDetail() {
       
       // Reject other trades
       const otherOffers = auctionOffers.filter(o => o.id !== tradeId);
-      for (const offer of otherOffers) {
-        await updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' });
-      }
 
-      // Update items status
-      await updateDoc(doc(db, 'items', item.id), { status: 'traded' });
-      await updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' });
-
-      // Update challenges
-      await updateChallengeIfActive(item.ownerId, item.id, offeredItemId);
-      await updateChallengeIfActive(offererId, offeredItemId, item.id);
+      // ⚡ Bolt Optimization: Batch related async updates concurrently to prevent O(N) network latency
+      await Promise.all([
+        ...otherOffers.map(offer => updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' })),
+        updateDoc(doc(db, 'items', item.id), { status: 'traded' }),
+        updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' }),
+        updateChallengeIfActive(item.ownerId, item.id, offeredItemId),
+        updateChallengeIfActive(offererId, offeredItemId, item.id)
+      ]);
 
       toast.success('¡Oferta aceptada! Revisa tus mensajes para coordinar.');
       navigate('/trades');
