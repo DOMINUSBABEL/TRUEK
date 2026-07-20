@@ -200,22 +200,28 @@ export default function ItemDetail() {
 
   const acceptOffer = async (tradeId: string, offererId: string, offeredItemId: string) => {
     try {
+      // ⚡ Bolt Optimization: Batch all independent Firestore updates concurrently using Promise.all
+      // to avoid O(N) network latency from sequential await calls in loops and updates.
+      const updatePromises: Promise<void>[] = [];
+
       // Update accepted trade
-      await updateDoc(doc(db, 'trades', tradeId), { status: 'accepted' });
+      updatePromises.push(updateDoc(doc(db, 'trades', tradeId), { status: 'accepted' }));
       
       // Reject other trades
       const otherOffers = auctionOffers.filter(o => o.id !== tradeId);
       for (const offer of otherOffers) {
-        await updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' });
+        updatePromises.push(updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' }));
       }
 
       // Update items status
-      await updateDoc(doc(db, 'items', item.id), { status: 'traded' });
-      await updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' });
+      updatePromises.push(updateDoc(doc(db, 'items', item.id), { status: 'traded' }));
+      updatePromises.push(updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' }));
 
-      // Update challenges
-      await updateChallengeIfActive(item.ownerId, item.id, offeredItemId);
-      await updateChallengeIfActive(offererId, offeredItemId, item.id);
+      // Update challenges (these internally perform queries and updates, we let them run concurrently)
+      updatePromises.push(updateChallengeIfActive(item.ownerId, item.id, offeredItemId));
+      updatePromises.push(updateChallengeIfActive(offererId, offeredItemId, item.id));
+
+      await Promise.all(updatePromises);
 
       toast.success('¡Oferta aceptada! Revisa tus mensajes para coordinar.');
       navigate('/trades');
