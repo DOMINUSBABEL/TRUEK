@@ -200,22 +200,27 @@ export default function ItemDetail() {
 
   const acceptOffer = async (tradeId: string, offererId: string, offeredItemId: string) => {
     try {
-      // Update accepted trade
-      await updateDoc(doc(db, 'trades', tradeId), { status: 'accepted' });
-      
-      // Reject other trades
       const otherOffers = auctionOffers.filter(o => o.id !== tradeId);
-      for (const offer of otherOffers) {
-        await updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' });
-      }
 
-      // Update items status
-      await updateDoc(doc(db, 'items', item.id), { status: 'traded' });
-      await updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' });
+      // ⚡ Bolt Optimization: Batch multiple sequential document updates concurrently
+      // to avoid O(N) network latency during offer acceptance.
+      const updatePromises = [
+        // Update accepted trade
+        updateDoc(doc(db, 'trades', tradeId), { status: 'accepted' }),
 
-      // Update challenges
-      await updateChallengeIfActive(item.ownerId, item.id, offeredItemId);
-      await updateChallengeIfActive(offererId, offeredItemId, item.id);
+        // Reject other trades
+        ...otherOffers.map(offer => updateDoc(doc(db, 'trades', offer.id), { status: 'rejected' })),
+
+        // Update items status
+        updateDoc(doc(db, 'items', item.id), { status: 'traded' }),
+        updateDoc(doc(db, 'items', offeredItemId), { status: 'traded' }),
+
+        // Update challenges
+        updateChallengeIfActive(item.ownerId, item.id, offeredItemId),
+        updateChallengeIfActive(offererId, offeredItemId, item.id)
+      ];
+
+      await Promise.all(updatePromises);
 
       toast.success('¡Oferta aceptada! Revisa tus mensajes para coordinar.');
       navigate('/trades');
