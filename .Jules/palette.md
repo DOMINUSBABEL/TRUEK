@@ -7,3 +7,6 @@
 ## 2026-05-11 - Enforcing Groundedness for UI Edits
 **Learning:** When generating execution plans that modify specific JSX elements (like adding `aria-hidden` to icons), guessing their exact implementation details without reading them first violates the Groundedness Rule and leads to rejected plans.
 **Action:** Always use `grep -n -C 5 "<ElementName"` or `sed` to locate and read the exact rendering of target UI elements in the source file before proposing modifications to them in an execution plan.
+## 2026-07-21 - [Add Clear Search Button and Accessibility Labels]
+**Learning:** Adding interactive accessibility elements within input wrappers (like a clear search 'X' button in absolute position) requires adjusting the padding (e.g. `pr-10`) of the underlying input to prevent the typed text from overflowing and colliding with the interactive icon.
+**Action:** Always test input text bounds and apply right padding on inputs containing internal, absolute-positioned buttons.
