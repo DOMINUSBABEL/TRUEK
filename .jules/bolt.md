@@ -7,3 +7,7 @@
 ## 2025-03-10 - [Batch Multiple Firestore Updates to Avoid Full Table Scans]
 **Learning:** In Trades.tsx, checking and updating overlapping "pending" trades for multiple target/offered items initially used a full table scan query for all "pending" trades (`where('status', '==', 'pending')`) which forces fetching ALL pending trades application-wide and checking them in JavaScript (O(N) data transfer).
 **Action:** Replace the global query with specific batched queries scoped by item ID. Use concurrent `Promise.all` to execute multiple precise queries, collect unique document IDs using a Set, and then perform concurrent `updateDoc` calls.
+
+## 2025-03-10 - O(N) Network Latency in Sequential Firestore Updates
+**Learning:** In `ItemDetail.tsx`, offer acceptance involved sequentially executing multiple asynchronous Firestore updates (updating the accepted trade, rejecting other offers via a loop, updating item statuses, and updating challenges). This creates an O(N) network latency chain where each document write waits for the previous one to complete, severely impacting the response time of the critical "accept offer" user action.
+**Action:** When updating multiple independent Firestore documents as part of a single user action, aggregate the returned Promises from functions like `updateDoc` and custom async helpers into an array and execute them concurrently using `Promise.all()`. This collapses the N network round-trips into roughly the time of the single slowest request.
