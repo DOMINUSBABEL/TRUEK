@@ -60,10 +60,12 @@ export default function Home() {
 
     // Sorting
     if (sortBy === 'oldest') {
-      result = [...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      // ⚡ Bolt Optimization: Firestore already provides items sorted by newest.
+      // Simply reversing the array is O(N) compared to O(N log N) sorting with expensive Date parsing.
+      result = [...result].reverse();
     } else if (sortBy === 'newest') {
-      // Already sorted by newest from Firestore, but re-sort just in case
-      result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      // ⚡ Bolt Optimization: Removed redundant re-sorting since Firestore already sorts by newest.
+      result = [...result];
     }
 
     return result;
