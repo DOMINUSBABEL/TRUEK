@@ -7,3 +7,7 @@
 ## 2026-05-11 - Enforcing Groundedness for UI Edits
 **Learning:** When generating execution plans that modify specific JSX elements (like adding `aria-hidden` to icons), guessing their exact implementation details without reading them first violates the Groundedness Rule and leads to rejected plans.
 **Action:** Always use `grep -n -C 5 "<ElementName"` or `sed` to locate and read the exact rendering of target UI elements in the source file before proposing modifications to them in an execution plan.
+
+## 2024-07-23 - Search Input Accessibility and Clear Buttons
+**Learning:** In Truekio's `Home` page, search inputs lacked accessible clear buttons, and `<select>` elements lacked `aria-label`s, rendering them ambiguous to screen readers. Clear buttons need explicit `aria-label`s and visible focus states (e.g., `focus-visible:ring-2`) and inner decorative icons (like `X` or `Search`) need `aria-hidden="true"`.
+**Action:** Always add conditionally rendered clear buttons to text inputs with corresponding `aria-label`s and `aria-hidden` icons. Ensure that `<input>` and `<select>` fields without `<label>` elements have descriptive `aria-label` attributes.
