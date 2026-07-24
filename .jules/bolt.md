@@ -7,3 +7,6 @@
 ## 2025-03-10 - [Batch Multiple Firestore Updates to Avoid Full Table Scans]
 **Learning:** In Trades.tsx, checking and updating overlapping "pending" trades for multiple target/offered items initially used a full table scan query for all "pending" trades (`where('status', '==', 'pending')`) which forces fetching ALL pending trades application-wide and checking them in JavaScript (O(N) data transfer).
 **Action:** Replace the global query with specific batched queries scoped by item ID. Use concurrent `Promise.all` to execute multiple precise queries, collect unique document IDs using a Set, and then perform concurrent `updateDoc` calls.
+## 2025-03-10 - Avoid Redundant Client-Side Sorting
+**Learning:** When fetching data from Firestore where the query already uses `orderBy` (e.g., `orderBy('createdAt', 'desc')`), the resulting documents are guaranteed to be sorted. Applying redundant client-side sorting (`O(N log N)`) with expensive `Date` parsing on these pre-sorted arrays wastes processing time and causes unnecessary re-renders when data grows.
+**Action:** Remove redundant `sort()` calls for arrays already sorted by the database. If the opposite ordering is required (e.g. oldest first instead of newest first), use the `O(N)` `Array.prototype.reverse()` method on a shallow copy instead of a full sort.
