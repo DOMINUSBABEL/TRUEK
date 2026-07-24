@@ -59,12 +59,12 @@ export default function Home() {
     }
 
     // Sorting
+    // OPTIMIZATION: Firestore query already sorts by 'createdAt' desc (newest first).
+    // Replaced expensive O(N log N) sorting + Date parsing with O(N) reverse.
     if (sortBy === 'oldest') {
-      result = [...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    } else if (sortBy === 'newest') {
-      // Already sorted by newest from Firestore, but re-sort just in case
-      result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      result = [...result].reverse();
     }
+    // No action needed for 'newest' as the array is already correctly sorted by Firestore.
 
     return result;
   }, [items, searchTerm, selectedCategory, sortBy]);
