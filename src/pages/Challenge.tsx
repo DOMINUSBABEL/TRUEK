@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, limit, getDocs, where, doc, setDoc, getDoc, documentId } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { Trophy, TrendingUp, Medal, ArrowRight, PlusCircle } from 'lucide-react';
+import { Trophy, TrendingUp, Medal, ArrowRight, PlusCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Challenge() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [leaders, setLeaders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeChallenge, setActiveChallenge] = useState<any>(null);
@@ -14,6 +16,7 @@ export default function Challenge() {
   const [myItems, setMyItems] = useState<any[]>([]);
   const [showStartModal, setShowStartModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState('');
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,6 +93,7 @@ export default function Challenge() {
 
   const startChallenge = async () => {
     if (!user || !selectedItem) return;
+    setIsStarting(true);
     try {
       const challengeRef = doc(collection(db, 'challenges'));
       await setDoc(challengeRef, {
@@ -105,6 +109,8 @@ export default function Challenge() {
     } catch (error) {
       console.error("Error starting challenge:", error);
       toast.error('Error al iniciar el reto');
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -125,7 +131,7 @@ export default function Challenge() {
             onClick={handleStartClick}
             className="bg-white text-primary font-bold tracking-widest uppercase text-xs py-4 px-6 rounded-full w-full shadow-lg flex justify-center items-center hover:bg-gray-100 transition-colors relative z-10"
           >
-            <PlusCircle className="w-5 h-5 mr-2" />
+            <PlusCircle className="w-5 h-5 mr-2" aria-hidden="true" />
             Start My Challenge
           </button>
         )}
@@ -227,7 +233,13 @@ export default function Challenge() {
             
             {myItems.length === 0 ? (
               <div className="text-center py-12 bg-neutral rounded-2xl border border-white/5">
-                <p className="text-gray-400 mb-4 font-medium">You don't have any published items to start the challenge.</p>
+                <p className="text-gray-400 mb-6 font-medium">You don't have any published items to start the challenge.</p>
+                <button
+                  onClick={() => { setShowStartModal(false); navigate('/add'); }}
+                  className="bg-primary text-white text-xs font-bold tracking-widest uppercase py-3 px-6 rounded-full hover:bg-primary-hover transition-colors shadow-[0_0_15px_rgba(124,77,255,0.3)]"
+                >
+                  Publish an item now
+                </button>
               </div>
             ) : (
               <div className="space-y-3 max-h-[50vh] overflow-y-auto mb-8 pr-2 custom-scrollbar">
@@ -259,10 +271,17 @@ export default function Challenge() {
             {myItems.length > 0 && (
               <button
                 onClick={startChallenge}
-                disabled={!selectedItem}
-                className="w-full bg-primary disabled:bg-surface-light disabled:text-gray-500 text-white font-bold tracking-widest uppercase text-xs py-4 rounded-full transition-all shadow-[0_0_20px_rgba(124,77,255,0.3)] disabled:shadow-none hover:bg-primary-hover"
+                disabled={!selectedItem || isStarting}
+                className="w-full bg-primary disabled:bg-surface-light disabled:text-gray-500 text-white font-bold tracking-widest uppercase text-xs py-4 rounded-full transition-all shadow-[0_0_20px_rgba(124,77,255,0.3)] disabled:shadow-none hover:bg-primary-hover flex items-center justify-center"
               >
-                Start Challenge
+                {isStarting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                    <span>Starting...</span>
+                  </>
+                ) : (
+                  'Start Challenge'
+                )}
               </button>
             )}
           </div>
